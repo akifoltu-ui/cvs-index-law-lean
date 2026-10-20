@@ -43,3 +43,5 @@ Apache 2.0, the Mathlib license.
 ---
 
 **Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İfadeler derlenir; ispatların biçimselleştirilmesi sürmektedir ve katkıya açıktır.
+
+_Lean statements drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._
