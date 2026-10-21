@@ -24,6 +24,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.nondeg_even`: Lemma 5.4, `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0` in the even sector.
 * `CvS.Qlam_norm`: Lemma 5.5, `Q_λ(w_s, w_s) = F G' - F' G`.
 * `CvS.kappa_eq_sigNeg`: eigenvalue count below `μ` equals `sigNeg` of `Q - μ`.
+* `CvS.eigvec_orth`, `CvS.block2_sigNeg`: Lemma 5.6 (Pontryagin balance), steps 1-2.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -477,14 +478,15 @@ theorem Qlam_norm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → �
   ring
 
 open QuadraticMap in
-/-- Bridge to Mathlib's signature: the number of eigenvalues of `Q` below `μ` equals
-`sigNeg` of any quadratic form `x ↦ x ⬝ᵥ (Q - μ) x` (uniqueness part of Sylvester's law). -/
-theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHermitian) (μ : ℝ)
-    (q : QuadraticForm ℝ (Idx N → ℝ))
-    (hq : ∀ x, q x = x ⬝ᵥ ((Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ x)) :
+/-- Bridge to Mathlib's signature, any finite index type: the number of eigenvalues of `Q`
+below `μ` equals `sigNeg` of any form `x ↦ x ⬝ᵥ (Q - μ) x` (Sylvester uniqueness). -/
+theorem kappa_eq_sigNeg' {n : Type*} [Fintype n] [DecidableEq n] (Q : Matrix n n ℝ)
+    (hQ : Q.IsHermitian) (μ : ℝ)
+    (q : QuadraticForm ℝ (n → ℝ))
+    (hq : ∀ x, q x = x ⬝ᵥ ((Q - μ • (1 : Matrix n n ℝ)) *ᵥ x)) :
     sigNeg q = (univ.filter (fun i => hQ.eigenvalues i < μ)).card := by
-  set U : Matrix (Idx N) (Idx N) ℝ := (hQ.eigenvectorUnitary : Matrix (Idx N) (Idx N) ℝ) with hUdef
-  set w : Idx N → ℝ := fun i => hQ.eigenvalues i - μ with hw
+  set U : Matrix n n ℝ := (hQ.eigenvectorUnitary : Matrix n n ℝ) with hUdef
+  set w : n → ℝ := fun i => hQ.eigenvalues i - μ with hw
   have hUU : Uᵀ * U = 1 := by
     have h := Unitary.coe_star_mul_self hQ.eigenvectorUnitary
     simpa [Matrix.star_eq_conjTranspose] using h
@@ -504,19 +506,19 @@ theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHer
     simpa [Matrix.mulVec, dotProduct, Matrix.mul_apply, mul_comm] using h
   have hdiag : Uᵀ * Q * U = diagonal hQ.eigenvalues := by
     rw [Matrix.mul_assoc, hQU, ← Matrix.mul_assoc, hUU, Matrix.one_mul]
-  have hD : Uᵀ * (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) * U = diagonal w := by
+  have hD : Uᵀ * (Q - μ • (1 : Matrix n n ℝ)) * U = diagonal w := by
     rw [Matrix.mul_sub, Matrix.sub_mul, hdiag, Matrix.mul_smul, Matrix.smul_mul,
       Matrix.mul_one, hUU]
     ext i j
     by_cases hij : i = j
     · subst hij; simp [w]
     · simp [hij]
-  have hD' : Uᵀ * ((Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) * U) = diagonal w := by
+  have hD' : Uᵀ * ((Q - μ • (1 : Matrix n n ℝ)) * U) = diagonal w := by
     rw [← Matrix.mul_assoc, hD]
-  have key : ∀ (c y : Idx N → ℝ), (U *ᵥ c) ⬝ᵥ y = c ⬝ᵥ (Uᵀ *ᵥ y) := by
+  have key : ∀ (c y : n → ℝ), (U *ᵥ c) ⬝ᵥ y = c ⬝ᵥ (Uᵀ *ᵥ y) := by
     intro c y
     rw [← vecMul_transpose, dotProduct_mulVec]
-  let L : (Idx N → ℝ) ≃ₗ[ℝ] (Idx N → ℝ) :=
+  let L : (n → ℝ) ≃ₗ[ℝ] (n → ℝ) :=
     LinearEquiv.ofLinear (Matrix.toLin' U) (Matrix.toLin' Uᵀ)
       (by rw [← Matrix.toLin'_mul, hUUt, Matrix.toLin'_one])
       (by rw [← Matrix.toLin'_mul, hUU, Matrix.toLin'_one])
@@ -524,7 +526,7 @@ theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHer
     { L with
       map_app' := by
         intro c
-        show q (U *ᵥ c) = weightedSumSquares ℝ w c
+        change q (U *ᵥ c) = weightedSumSquares ℝ w c
         rw [hq, weightedSumSquares_apply, key]
         simp only [Matrix.mulVec_mulVec]
         rw [hD']
@@ -533,10 +535,53 @@ theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHer
   have hE : QuadraticMap.Equivalent q (weightedSumSquares ℝ w) := ⟨e.symm⟩
   rw [QuadraticForm.sigNeg_of_equiv_weightedSumSquares hE]
   have hset :
-      {i | w i < 0} = (↑(univ.filter (fun i => hQ.eigenvalues i < μ)) : Set (Idx N)) := by
+      {i | w i < 0} = (↑(univ.filter (fun i => hQ.eigenvalues i < μ)) : Set n) := by
     ext i
     simp [w, sub_neg]
   rw [hset, Set.ncard_coe_finset]
+
+/-- Bridge to Mathlib's signature for CvS-sized matrices (specialisation of `kappa_eq_sigNeg'`). -/
+theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHermitian) (μ : ℝ)
+    (q : QuadraticForm ℝ (Idx N → ℝ))
+    (hq : ∀ x, q x = x ⬝ᵥ ((Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ x)) :
+    sigNeg q = (univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
+  kappa_eq_sigNeg' Q hQ μ q hq
+
+/-- Lemma 5.6, step 1: eigenvectors of a `B`-self-adjoint `T` for distinct real eigenvalues
+are `B`-orthogonal. -/
+theorem eigvec_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ} (hB : Bᵀ = B)
+    (hBT : (B * T)ᵀ = B * T) {v w : n → ℝ} {r s : ℝ}
+    (hv : T *ᵥ v = r • v) (hw : T *ᵥ w = s • w) (hrs : r ≠ s) :
+    v ⬝ᵥ (B *ᵥ w) = 0 := by
+  have key : v ⬝ᵥ ((B * T) *ᵥ w) = (T *ᵥ v) ⬝ᵥ (B *ᵥ w) := by
+    rw [← hBT, transpose_mul, hB, ← mulVec_mulVec, mulVec_transpose, dotProduct_comm v,
+      ← dotProduct_mulVec, dotProduct_comm]
+  have hs : v ⬝ᵥ ((B * T) *ᵥ w) = s * (v ⬝ᵥ (B *ᵥ w)) := by
+    rw [← mulVec_mulVec, hw, mulVec_smul, dotProduct_smul, smul_eq_mul]
+  have hr : (T *ᵥ v) ⬝ᵥ (B *ᵥ w) = r * (v ⬝ᵥ (B *ᵥ w)) := by
+    rw [hv, smul_dotProduct, smul_eq_mul]
+  have h0 : (r - s) * (v ⬝ᵥ (B *ᵥ w)) = 0 := by
+    rw [sub_mul]; linarith [key, hs, hr]
+  rcases mul_eq_zero.mp h0 with h | h
+  · exact absurd (sub_eq_zero.mp h) hrs
+  · exact h
+
+/-- Lemma 5.6, step 2: a symmetric 2x2 block with negative determinant has signature (1,1). -/
+theorem block2_sigNeg (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian)
+    (hdet : M.det < 0)
+    (q : QuadraticForm ℝ (Fin 2 → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (M *ᵥ x)) :
+    sigNeg q = 1 := by
+  have hq0 : ∀ x, q x = x ⬝ᵥ ((M - (0 : ℝ) • (1 : Matrix (Fin 2) (Fin 2) ℝ)) *ᵥ x) := by
+    intro x; rw [zero_smul, sub_zero]; exact hq x
+  rw [kappa_eq_sigNeg' M hM 0 q hq0]
+  have hprod : hM.eigenvalues 0 * hM.eigenvalues 1 < 0 := by
+    have h := hM.det_eq_prod_eigenvalues
+    simp only [Fin.prod_univ_two, RCLike.ofReal_real_eq_id, id] at h
+    rw [← h]; exact hdet
+  rw [Finset.card_filter, Fin.sum_univ_two]
+  rcases mul_neg_iff.mp hprod with ⟨h0, h1⟩ | ⟨h0, h1⟩
+  · rw [if_neg (not_lt.mpr h0.le), if_pos h1]
+  · rw [if_pos h0, if_neg (not_lt.mpr h1.le)]
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

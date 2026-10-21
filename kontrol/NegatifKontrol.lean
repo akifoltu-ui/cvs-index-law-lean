@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.8 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.9 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly NINE errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly TWELVE errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -127,3 +127,25 @@ example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (hQ : Q.IsHermitian) 
     (hq : ∀ x, q x = x ⬝ᵥ ((Q + μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x)) :
     sigNeg q = (Finset.univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
   CvS.kappa_eq_sigNeg Q hQ μ q hq
+
+-- CORRUPTED input (balance 1): orthogonality claimed for EQUAL eigenvalues. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] {B T : Matrix n n ℝ} (hB : Bᵀ = B)
+    (hBT : (B * T)ᵀ = B * T) {v w : n → ℝ} {r : ℝ}
+    (hv : T *ᵥ v = r • v) (hw : T *ᵥ w = r • w) (hrr : r = r) :
+    v ⬝ᵥ (B *ᵥ w) = 0 :=
+  CvS.eigvec_orth hB hBT hv hw hrr
+
+-- CORRUPTED input (balance 2): 2x2 block with POSITIVE determinant claimed to have one negative direction.
+open Matrix in
+example (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian) (hdet : 0 < M.det)
+    (q : QuadraticForm ℝ (Fin 2 → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (M *ᵥ x)) :
+    sigNeg q = 1 :=
+  CvS.block2_sigNeg M hM hdet q hq
+
+-- CORRUPTED input (balance 3): block claimed to have TWO negative directions. This must FAIL.
+open Matrix in
+example (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian) (hdet : M.det < 0)
+    (q : QuadraticForm ℝ (Fin 2 → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (M *ᵥ x)) :
+    sigNeg q = 2 :=
+  CvS.block2_sigNeg M hM hdet q hq

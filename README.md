@@ -29,6 +29,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.nondeg_even` | Lemma 5.4, even sector: $`\langle\beta,\xi\rangle=0`$, $`\langle\eta,\xi\rangle\neq0`$ | **proved** |
 | `CvS.Qlam_norm` | Lemma 5.5, $`Q_\lambda(w_s,w_s)=FG'-F'G`$ | **proved** |
 | `CvS.kappa_eq_sigNeg` | bridge: eigenvalue count below $`\mu`$ = `sigNeg` of $`Q-\mu`$ (Sylvester) | **proved** |
+| `CvS.eigvec_orth`, `CvS.block2_sigNeg` | Lemma 5.6 steps: eigenvector orthogonality; a 2×2 block with $`\det<0`$ has one negative direction | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.lock` | Theorem 6, resolvent lock | to be completed |
 
@@ -41,7 +42,7 @@ The statements compile against Mathlib (Lean v4.36.0-rc1).
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly nine errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly twelve errors expected
 ```
 
 ## License
