@@ -59,10 +59,16 @@ def d {N : ℕ} (b ξ : Idx N → ℝ) : ℕ :=
   ((P ξ).roots.toFinset.filter (fun s =>
       s ≠ 0 ∧ 0 < (derivative (P ξ)).eval s * (P (fun k => b k * ξ k)).eval s)).card
 
-/-- Warm-up target: a CvS matrix is symmetric. -/
+/-- A CvS matrix is symmetric. -/
 theorem isSymm_of_isCvS {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
     (hC : IsCvS Q a b) : Q.IsSymm := by
-  sorry
+  refine Matrix.IsSymm.ext fun i j => ?_
+  by_cases h : i = j
+  · subst h
+    rfl
+  · -- (b_j - b_i)/(j - i) = (b_i - b_j)/(i - j): numerator and denominator both flip sign.
+    rw [hC.off j i (Ne.symm h), hC.off i j h, ← neg_sub (b i) (b j),
+      ← neg_sub (lab i : ℝ) (lab j : ℝ), neg_div_neg_eq]
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

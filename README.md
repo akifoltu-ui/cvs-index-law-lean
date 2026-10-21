@@ -20,7 +20,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 
 | Lean declaration | Content | Proof |
 |---|---|---|
-| `CvS.isSymm_of_isCvS` | CvS matrices are symmetric | to be completed — good first target |
+| `CvS.isSymm_of_isCvS` | CvS matrices are symmetric | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.lock` | Theorem 6, resolvent lock | to be completed |
 
@@ -33,7 +33,7 @@ The statements compile against Mathlib (Lean v4.36.0-rc1).
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly one error expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly two errors expected
 ```
 
 ## License
@@ -44,4 +44,4 @@ Apache 2.0, the Mathlib license.
 
 **Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İfadeler derlenir; ispatların biçimselleştirilmesi sürmektedir ve katkıya açıktır.
 
-_Lean statements drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._
+_Lean statements and proofs drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._
