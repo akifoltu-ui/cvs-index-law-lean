@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.2 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.3 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly TWO errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly THREE errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -19,3 +19,13 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
     (hC : CvS.IsCvS Q a b) (i j : CvS.Idx N) (h : i ≠ j) : Q j i = Q i j := by
   rw [hC.off j i (Ne.symm h), hC.off i j h]
+
+-- CORRECT input: the commutator identity is accepted.
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge b (fun _ => 1) :=
+  CvS.commutator hC
+
+-- CORRUPTED input: wedge with the factors swapped (wrong sign). This must FAIL.
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge (fun _ => 1) b :=
+  CvS.commutator hC

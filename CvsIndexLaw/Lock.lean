@@ -18,6 +18,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 
 * `CvS.IsCvS`: matrices of Connes--van Suijlekom type.
 * `CvS.P`: the polynomial `P_ξ(s) = ∑_k ξ_k ∏_{j ≠ k} (j - s)`.
+* `CvS.commutator`: CvS Lemma 5.1, `[D, Q] = β ∧ η` (also for `Q - μ`).
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -69,6 +70,46 @@ theorem isSymm_of_isCvS {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N 
   · -- (b_j - b_i)/(j - i) = (b_i - b_j)/(i - j): numerator and denominator both flip sign.
     rw [hC.off j i (Ne.symm h), hC.off i j h, ← neg_sub (b i) (b j),
       ← neg_sub (lab i : ℝ) (lab j : ℝ), neg_div_neg_eq]
+
+/-- Labels are distinct: `lab i = lab j → i = j`. -/
+theorem lab_injective {N : ℕ} : Function.Injective (lab (N := N)) := by
+  intro i j h
+  apply Fin.ext
+  unfold lab at h
+  omega
+
+/-- The position operator `D e_j = j e_j`. -/
+def D (N : ℕ) : Matrix (Idx N) (Idx N) ℝ := Matrix.diagonal fun i => (lab i : ℝ)
+
+/-- The wedge `u ∧ v = |u⟩⟨v| - |v⟩⟨u|`. -/
+def wedge {N : ℕ} (u v : Idx N → ℝ) : Matrix (Idx N) (Idx N) ℝ :=
+  Matrix.of fun i j => u i * v j - v i * u j
+
+/-- CvS Lemma 5.1: `[D, Q] = β ∧ η`, with `β = (b_j)` and `η = (1, …, 1)`. -/
+theorem commutator {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) : D N * Q - Q * D N = wedge b (fun _ => 1) := by
+  ext i j
+  simp only [D, wedge, Matrix.sub_apply, Matrix.diagonal_mul, Matrix.mul_diagonal,
+    Matrix.of_apply, mul_one, one_mul]
+  by_cases h : i = j
+  · subst h
+    ring
+  · rw [hC.off i j h]
+    have hlab : (lab i : ℝ) ≠ (lab j : ℝ) := by
+      have := lab_injective.ne h
+      exact_mod_cast this
+    have hne : (lab i : ℝ) - (lab j : ℝ) ≠ 0 := sub_ne_zero.mpr hlab
+    field_simp
+    try ring
+
+/-- The same identity for the shifted matrix `Q - μ`. -/
+theorem commutator_shift {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) (μ : ℝ) :
+    D N * (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) - (Q - μ • 1) * D N
+      = wedge b (fun _ => 1) := by
+  rw [mul_sub, sub_mul, Matrix.mul_smul, Matrix.smul_mul, mul_one, one_mul,
+    ← commutator hC]
+  abel
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:
