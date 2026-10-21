@@ -20,6 +20,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.P`: the polynomial `P_ξ(s) = ∑_k ξ_k ∏_{j ≠ k} (j - s)`.
 * `CvS.commutator`: CvS Lemma 5.1, `[D, Q] = β ∧ η` (also for `Q - μ`).
 * `CvS.Dprime`, `CvS.det_Dprime`: Lemma 5.2, the rank-one determinant.
+* `CvS.Qlam_Dprime_isSymm`: Lemma 5.3, `D'_φ` is self-adjoint for the form of `Q_λ`.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -149,7 +150,8 @@ theorem Dprime_sub_eq {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ) 
   split_ifs <;> ring
 
 -- Lemma 5.2 helper: ∏_{j≠k} (j - s) = (∏_j (j - s)) / (k - s).
-theorem prod_erase_eq_div {N : ℕ} (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) (k : Idx N) :
+theorem prod_erase_eq_div {N : ℕ} (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0)
+    (k : Idx N) :
     ∏ j ∈ univ.erase k, ((lab j : ℝ) - s) = (∏ j : Idx N, ((lab j : ℝ) - s)) / ((lab k : ℝ) - s) := by
   rw [eq_div_iff (hs k)]
   exact Finset.prod_erase_mul univ (fun j : Idx N => (lab j : ℝ) - s) (mem_univ k)
@@ -235,6 +237,79 @@ theorem det_Dprime {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k * ξ k �
     exact dense_univ.sdiff_finite (Set.finite_range _)
   have heq := Continuous.ext_on hdense h1 h2 fun t ht => det_Dprime_off_labels φ ξ hc t ht
   exact congrFun heq s
+
+/-- Lemma 5.3 (Q_λ-symmetry criterion). If `Q_λ ξ = 0` and `φ = x η + y β` with
+`c = ⟨φ, ξ⟩ ≠ 0`, then `Q_λ D'_φ` is symmetric. -/
+theorem Qlam_Dprime_isSymm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0) (x y : ℝ)
+    (hc : ∑ k, (x + y * b k) * ξ k ≠ 0) :
+    ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) * Dprime (fun k => x + y * b k) ξ).IsSymm := by
+  have hcs := commutator_shift hC lam
+  set A := Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ) with hA
+  -- A is symmetric
+  have hAsym : ∀ i j, A j i = A i j := by
+    intro i j
+    have hs := (isSymm_of_isCvS hC).apply i j
+    by_cases h : i = j
+    · subst h
+      rfl
+    · simp [hA, Matrix.sub_apply, Matrix.one_apply_ne h, Matrix.one_apply_ne (Ne.symm h), hs]
+  -- entrywise commutator: lab i * A i j - A i j * lab j = b i - b j
+  have hcomm : ∀ i j, (lab i : ℝ) * A i j - A i j * (lab j : ℝ) = b i - b j := by
+    intro i j
+    have := congrArg (fun M => M i j) hcs
+    simpa [D, wedge, Matrix.sub_apply, Matrix.diagonal_mul, Matrix.mul_diagonal,
+      Matrix.of_apply] using this
+  -- v_i := (A D ξ)_i = ⟨β, ξ⟩ - b_i ⟨η, ξ⟩
+  have hv : ∀ i, ∑ k, A i k * ((lab k : ℝ) * ξ k)
+      = (∑ k, b k * ξ k) - b i * ∑ k, ξ k := by
+    intro i
+    have h0 : ∑ k, A i k * ξ k = 0 := by
+      have := congrFun hξ i
+      simpa [Matrix.mulVec, dotProduct] using this
+    have h1 : ∑ k, ((lab i : ℝ) * A i k - A i k * (lab k : ℝ)) * ξ k
+        = ∑ k, (b i - b k) * ξ k :=
+      Finset.sum_congr rfl fun k _ => by rw [hcomm i k]
+    have e1 : ∑ k, ((lab i : ℝ) * A i k - A i k * (lab k : ℝ)) * ξ k
+        = (lab i : ℝ) * ∑ k, A i k * ξ k - ∑ k, A i k * ((lab k : ℝ) * ξ k) := by
+      rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      ring
+    have e2 : ∑ k, (b i - b k) * ξ k = b i * ∑ k, ξ k - ∑ k, b k * ξ k := by
+      rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      ring
+    rw [e1, e2, h0] at h1
+    linarith
+  -- entry formula: (A D')_{ij} = A_ij j - (1/c) φ_j v_i
+  have hentry : ∀ i j, (A * Dprime (fun k => x + y * b k) ξ) i j
+      = A i j * (lab j : ℝ)
+        - 1 / (∑ k, (x + y * b k) * ξ k) * (x + y * b j)
+          * ∑ k, A i k * ((lab k : ℝ) * ξ k) := by
+    intro i j
+    rw [Matrix.mul_apply]
+    have hk : ∀ k, A i k * Dprime (fun k => x + y * b k) ξ k j
+        = (if k = j then A i k * (lab k : ℝ) else 0)
+          - 1 / (∑ k, (x + y * b k) * ξ k) * (x + y * b j) * (A i k * ((lab k : ℝ) * ξ k)) := by
+      intro k
+      simp only [Dprime, D, Matrix.sub_apply, Matrix.smul_apply, Matrix.diagonal_apply,
+        Matrix.of_apply, smul_eq_mul]
+      split_ifs <;> ring
+    rw [Finset.sum_congr rfl fun k _ => hk k, Finset.sum_sub_distrib, Finset.sum_ite_eq']
+    simp only [Finset.mem_univ, ↓reduceIte]
+    rw [← Finset.mul_sum]
+  -- c = x ⟨η, ξ⟩ + y ⟨β, ξ⟩
+  have hcexp : ∑ k, (x + y * b k) * ξ k = x * ∑ k, ξ k + y * ∑ k, b k * ξ k := by
+    rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    ring
+  have hcinv : (∑ k, (x + y * b k) * ξ k)⁻¹ * (∑ k, (x + y * b k) * ξ k) = 1 :=
+    inv_mul_cancel₀ hc
+  refine Matrix.IsSymm.ext fun i j => ?_
+  rw [hentry j i, hentry i j, hv i, hv j, hAsym i j]
+  linear_combination hcomm i j - (b i - b j) * hcinv
+    + (b i - b j) * (∑ k, (x + y * b k) * ξ k)⁻¹ * hcexp
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

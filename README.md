@@ -25,6 +25,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.commutator_shift` | the same for $`Q-\mu`$ | **proved** |
 | `CvS.Dprime_mulVec_self` | Lemma 5.2(a), $`D'_\varphi\xi=0`$ | **proved** |
 | `CvS.det_Dprime` | Lemma 5.2(b), rank-one determinant | **proved** |
+| `CvS.Qlam_Dprime_isSymm` | Lemma 5.3, $`Q_\lambda D'_\varphi`$ symmetric for $`\varphi\in\mathrm{span}\{\eta,\beta\}`$ | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.lock` | Theorem 6, resolvent lock | to be completed |
 
@@ -37,7 +38,7 @@ The statements compile against Mathlib (Lean v4.36.0-rc1).
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly four errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly five errors expected
 ```
 
 ## License
