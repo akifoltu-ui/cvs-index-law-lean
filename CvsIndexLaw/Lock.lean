@@ -22,6 +22,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.Dprime`, `CvS.det_Dprime`: Lemma 5.2, the rank-one determinant.
 * `CvS.Qlam_Dprime_isSymm`: Lemma 5.3, `D'_φ` is self-adjoint for the form of `Q_λ`.
 * `CvS.nondeg_even`: Lemma 5.4, `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0` in the even sector.
+* `CvS.Qlam_norm`: Lemma 5.5, `Q_λ(w_s, w_s) = F G' - F' G`.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -314,7 +315,7 @@ theorem Qlam_Dprime_isSymm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx
     + (b i - b j) * (∑ k, (x + y * b k) * ξ k)⁻¹ * hcexp
 
 /-- Labels are odd under the reflection: `lab (rev i) = - lab i`. -/
-theorem lab_rev {N : ℕ} (i : Idx N) : lab (Fin.rev i) = - lab i := by
+theorem lab_rev {N : ℕ} (i : Idx N) : lab (Fin.rev i) = -lab i := by
   have := i.isLt
   simp only [lab, Fin.val_rev]
   omega
@@ -324,7 +325,7 @@ theorem lab_eq_zero_iff {N : ℕ} (i : Idx N) : lab i = 0 ↔ i = e0 N := by
   constructor
   · intro h
     apply Fin.ext
-    show (i : ℕ) = N
+    change (i : ℕ) = N
     simp only [lab] at h
     omega
   · rintro rfl
@@ -332,7 +333,7 @@ theorem lab_eq_zero_iff {N : ℕ} (i : Idx N) : lab i = 0 ↔ i = e0 N := by
 
 /-- An odd vector is orthogonal to an even one: `∑ b_k ξ_k = 0`. -/
 theorem sum_odd_mul_even_eq_zero {N : ℕ} (b ξ : Idx N → ℝ)
-    (hb : ∀ i, b (Fin.rev i) = - b i) (hξ : ∀ i, ξ (Fin.rev i) = ξ i) :
+    (hb : ∀ i, b (Fin.rev i) = -b i) (hξ : ∀ i, ξ (Fin.rev i) = ξ i) :
     ∑ k, b k * ξ k = 0 := by
   have h : ∑ k, b (Fin.rev k) * ξ (Fin.rev k) = ∑ k, b k * ξ k :=
     Fintype.sum_equiv Fin.revPerm _ _ (fun k => rfl)
@@ -403,6 +404,76 @@ theorem nondeg_even {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → 
   have hz : lab k ≠ 0 := fun h => hk ((lab_eq_zero_iff k).mp h)
   have hlab : (lab k : ℝ) ≠ 0 := by exact_mod_cast hz
   exact hξk ((mul_eq_zero.mp (hzero k)).resolve_left hlab)
+
+/-- Lemma 5.5 (normalization). With `w_s = (D - s)⁻¹ ξ`, `F = ⟨η, w_s⟩`, `G = ⟨β, w_s⟩`
+and the derivatives written as finite sums `F' = Σ ξ_k/(k-s)²`, `G' = Σ b_k ξ_k/(k-s)²`:
+`Q_λ(w_s, w_s) = F G' - F' G`. -/
+theorem Qlam_norm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0)
+    (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) :
+    ∑ i, ∑ j, ξ i / ((lab i : ℝ) - s) * (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) i j
+        * (ξ j / ((lab j : ℝ) - s))
+      = (∑ k, ξ k / ((lab k : ℝ) - s)) * (∑ k, b k * ξ k / ((lab k : ℝ) - s) ^ 2)
+        - (∑ k, ξ k / ((lab k : ℝ) - s) ^ 2) * (∑ k, b k * (ξ k / ((lab k : ℝ) - s))) := by
+  have hcs := commutator_shift hC lam
+  set A := Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ) with hA
+  have hcomm : ∀ i j, (lab i : ℝ) * A i j - A i j * (lab j : ℝ) = b i - b j := by
+    intro i j
+    have := congrArg (fun M => M i j) hcs
+    simpa [D, wedge, Matrix.sub_apply, Matrix.diagonal_mul, Matrix.mul_diagonal,
+      Matrix.of_apply] using this
+  have h0 : ∀ i, ∑ j, A i j * ξ j = 0 := fun i => by
+    have := congrFun hξ i
+    simpa [Matrix.mulVec, dotProduct] using this
+  -- j w_j = ξ_j + s w_j
+  have hlw : ∀ j, (lab j : ℝ) * (ξ j / ((lab j : ℝ) - s))
+      = ξ j + s * (ξ j / ((lab j : ℝ) - s)) := by
+    intro j
+    have := hs j
+    field_simp
+    ring
+  -- (Q_λ w)_i = (b_i F - G) / (i - s)
+  have hAw : ∀ i, ∑ j, A i j * (ξ j / ((lab j : ℝ) - s))
+      = (b i * ∑ k, ξ k / ((lab k : ℝ) - s) - ∑ k, b k * (ξ k / ((lab k : ℝ) - s)))
+        / ((lab i : ℝ) - s) := by
+    intro i
+    rw [eq_div_iff (hs i)]
+    have h1 : ∑ j, ((lab i : ℝ) * A i j - A i j * (lab j : ℝ)) * (ξ j / ((lab j : ℝ) - s))
+        = ∑ j, (b i - b j) * (ξ j / ((lab j : ℝ) - s)) :=
+      Finset.sum_congr rfl fun j _ => by rw [hcomm i j]
+    have hterm : ∀ j, ((lab i : ℝ) * A i j - A i j * (lab j : ℝ)) * (ξ j / ((lab j : ℝ) - s))
+        = ((lab i : ℝ) - s) * (A i j * (ξ j / ((lab j : ℝ) - s))) - A i j * ξ j := by
+      intro j
+      linear_combination (-(A i j)) * hlw j
+    have e1 : ∑ j, ((lab i : ℝ) * A i j - A i j * (lab j : ℝ)) * (ξ j / ((lab j : ℝ) - s))
+        = ((lab i : ℝ) - s) * ∑ j, A i j * (ξ j / ((lab j : ℝ) - s)) := by
+      rw [Finset.sum_congr rfl fun j _ => hterm j, Finset.sum_sub_distrib, ← Finset.mul_sum,
+        h0 i, sub_zero]
+    have e2 : ∑ j, (b i - b j) * (ξ j / ((lab j : ℝ) - s))
+        = b i * ∑ k, ξ k / ((lab k : ℝ) - s) - ∑ k, b k * (ξ k / ((lab k : ℝ) - s)) := by
+      rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      ring
+    rw [e1, e2] at h1
+    linarith
+  have hL : ∀ i, ∑ j, ξ i / ((lab i : ℝ) - s) * A i j * (ξ j / ((lab j : ℝ) - s))
+      = ξ i / ((lab i : ℝ) - s) * ∑ j, A i j * (ξ j / ((lab j : ℝ) - s)) := by
+    intro i
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    ring
+  have hT : ∀ i, ξ i / ((lab i : ℝ) - s)
+        * ((b i * ∑ k, ξ k / ((lab k : ℝ) - s) - ∑ k, b k * (ξ k / ((lab k : ℝ) - s)))
+          / ((lab i : ℝ) - s))
+      = (∑ k, ξ k / ((lab k : ℝ) - s)) * (b i * ξ i / ((lab i : ℝ) - s) ^ 2)
+        - (∑ k, b k * (ξ k / ((lab k : ℝ) - s))) * (ξ i / ((lab i : ℝ) - s) ^ 2) := by
+    intro i
+    have := hs i
+    field_simp
+  simp_rw [hL, hAw, hT]
+  rw [Finset.sum_sub_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
+  ring
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

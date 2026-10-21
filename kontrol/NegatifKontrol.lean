@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.6 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.7 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly SIX errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly SEVEN errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -80,3 +80,26 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
     (hodd : ∀ i, ξ (Fin.rev i) = - ξ i) (hne : ∃ k, k ≠ CvS.e0 N ∧ ξ k ≠ 0) :
     ∑ k, ξ k ≠ 0 :=
   (CvS.nondeg_even hC lam ξ hξ hsimple hodd hne).2
+
+-- CORRECT input: Lemma 5.5, Q_λ(w,w) = F G' - F' G, is accepted.
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
+    (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
+    ∑ i, ∑ j, ξ i / ((CvS.lab i : ℝ) - s) * (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
+        * (ξ j / ((CvS.lab j : ℝ) - s))
+      = (∑ k, ξ k / ((CvS.lab k : ℝ) - s)) * (∑ k, b k * ξ k / ((CvS.lab k : ℝ) - s) ^ 2)
+        - (∑ k, ξ k / ((CvS.lab k : ℝ) - s) ^ 2) * (∑ k, b k * (ξ k / ((CvS.lab k : ℝ) - s))) :=
+  CvS.Qlam_norm hC lam ξ hξ s hs
+
+-- CORRUPTED input: the sign-flipped formula F' G - F G'.
+-- Numerically it fails at all 300 test points (median deviation 1.2). This must FAIL.
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
+    (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
+    ∑ i, ∑ j, ξ i / ((CvS.lab i : ℝ) - s) * (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
+        * (ξ j / ((CvS.lab j : ℝ) - s))
+      = (∑ k, ξ k / ((CvS.lab k : ℝ) - s) ^ 2) * (∑ k, b k * (ξ k / ((CvS.lab k : ℝ) - s)))
+        - (∑ k, ξ k / ((CvS.lab k : ℝ) - s)) * (∑ k, b k * ξ k / ((CvS.lab k : ℝ) - s) ^ 2) :=
+  CvS.Qlam_norm hC lam ξ hξ s hs
