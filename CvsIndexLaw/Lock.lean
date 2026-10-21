@@ -29,6 +29,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero`: Lemma 5.6, step 4a.
 * `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth`: Lemma 5.6, step 4b.
 * `CvS.pair_orth`, `CvS.plane_split` (+ helpers): Lemma 5.6, step 4c.
+* `CvS.re_im_combo`, `CvS.real_family_indep`: Lemma 5.6, step 4d (independence).
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -861,6 +862,86 @@ theorem plane_split {n : Type*} [Fintype n] {B : Matrix n n ℝ} (hB : Bᵀ = B)
   · rw [bil_expand, bil_expand, bil_symm hB w u, hw]
     convert h2 using 1
     ring
+
+/-- Lemma 5.6, step 4d: per-term identity behind the real/complex switch:
+`(g₁ - i g₂) z + (g₁ + i g₂) conj z = 2 (g₁ Re z + g₂ Im z)`. -/
+theorem re_im_combo (g₁ g₂ : ℝ) (z : ℂ) :
+    ((g₁ : ℂ) - Complex.I * g₂) * z + ((g₁ : ℂ) + Complex.I * g₂) * star z
+      = ((2 * (g₁ * z.re + g₂ * z.im) : ℝ) : ℂ) := by
+  apply Complex.ext <;> simp [Complex.mul_re, Complex.mul_im] <;> ring
+
+/-- Lemma 5.6, step 4d: the real family `{v_i, Re z_k, Im z_k}` is linearly independent over `ℝ`
+(from complex independence of eigenvectors with distinct eigenvalues). -/
+theorem real_family_indep {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    (T : Matrix n n ℝ) (r : ι → ℝ) (v : ι → n → ℝ)
+    (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k))))) :
+    LinearIndependent ℝ
+      (Sum.elim v (Sum.elim (fun k j => (z k j).re) (fun k j => (z k j).im))) := by
+  have hV : ∀ a : ι ⊕ (κ ⊕ κ), Module.End.HasEigenvector (Matrix.toLin' (T.map (algebraMap ℝ ℂ)))
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k))) a)
+      (Sum.elim (fun i j => ((v i j : ℝ) : ℂ)) (Sum.elim z (fun k => star (z k))) a) := by
+    intro a
+    rcases a with i | k | k
+    · simp only [Sum.elim_inl]
+      refine ⟨Module.End.mem_eigenspace_iff.mpr ?_, ?_⟩
+      · rw [Matrix.toLin'_apply]
+        ext j
+        have h := congrArg (fun x : ℝ => (x : ℂ)) (congrFun (hv i) j)
+        simpa [Matrix.mulVec, dotProduct, Complex.ofReal_sum] using h
+      · intro h0
+        apply hv0 i
+        ext j
+        have h := congrFun h0 j
+        simpa using h
+    · simp only [Sum.elim_inr, Sum.elim_inl]
+      exact ⟨Module.End.mem_eigenspace_iff.mpr (by rw [Matrix.toLin'_apply]; exact hz k), hz0 k⟩
+    · simp only [Sum.elim_inr]
+      refine ⟨Module.End.mem_eigenspace_iff.mpr ?_, ?_⟩
+      · rw [Matrix.toLin'_apply]; exact conj_eigvec (hz k)
+      · intro h0
+        apply hz0 k
+        ext j
+        have h := congrFun h0 j
+        simpa using h
+  have hL := Module.End.eigenvectors_linearIndependent' (Matrix.toLin' (T.map (algebraMap ℝ ℂ)))
+    _ hinj _ hV
+  rw [Fintype.linearIndependent_iff] at hL ⊢
+  intro g hg
+  set h : ι ⊕ (κ ⊕ κ) → ℂ := Sum.elim (fun i => ((2 * g (Sum.inl i) : ℝ) : ℂ))
+    (Sum.elim (fun k => (g (Sum.inr (Sum.inl k)) : ℂ) - Complex.I * g (Sum.inr (Sum.inr k)))
+      (fun k => (g (Sum.inr (Sum.inl k)) : ℂ) + Complex.I * g (Sum.inr (Sum.inr k)))) with hh
+  have hsum : ∑ a, h a • (Sum.elim (fun i j => ((v i j : ℝ) : ℂ))
+      (Sum.elim z (fun k => star (z k))) a) = 0 := by
+    ext j
+    have hj := congrFun hg j
+    simp only [Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, Finset.sum_apply,
+      Pi.smul_apply, smul_eq_mul, Pi.zero_apply, hh, Pi.star_apply] at hj ⊢
+    rw [← Finset.sum_add_distrib]
+    simp only [re_im_combo]
+    have h_real : ∑ a, 2 * g (Sum.inl a) * v a j
+        + ∑ k, 2 * (g (Sum.inr (Sum.inl k)) * (z k j).re
+          + g (Sum.inr (Sum.inr k)) * (z k j).im) = 0 := by
+      have e : ∀ a, 2 * g (Sum.inl a) * v a j = 2 * (g (Sum.inl a) * v a j) := fun a => by ring
+      simp only [e]
+      rw [← Finset.mul_sum, ← Finset.mul_sum, Finset.sum_add_distrib, ← mul_add, hj, mul_zero]
+    exact_mod_cast h_real
+  have h0 := hL h hsum
+  intro a
+  rcases a with i | k | k
+  · have e := h0 (Sum.inl i)
+    simp only [hh, Sum.elim_inl] at e
+    have e2 : 2 * g (Sum.inl i) = 0 := by exact_mod_cast e
+    linarith
+  · have e := congrArg Complex.re (h0 (Sum.inr (Sum.inl k)))
+    simp [hh] at e
+    exact e
+  · have e := congrArg Complex.im (h0 (Sum.inr (Sum.inl k)))
+    simp [hh] at e
+    exact e
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

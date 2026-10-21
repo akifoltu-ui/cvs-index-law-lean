@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.13 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.14 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly TWENTY-FOUR errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly TWENTY-SEVEN errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -253,3 +253,35 @@ example {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z y : n → ℂ) :
         = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).im)
           + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).re) :=
   CvS.cc_re_im B z y
+
+-- CORRUPTED input (indep 1): injectivity stated with ζ twice (conjugates missing). This must FAIL.
+open Matrix in
+example {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    (T : Matrix n n ℝ) (r : ι → ℝ) (v : ι → n → ℝ)
+    (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ ζ))) :
+    LinearIndependent ℝ
+      (Sum.elim v (Sum.elim (fun k j => (z k j).re) (fun k j => (z k j).im))) :=
+  CvS.real_family_indep T r v hv hv0 ζ z hz hz0 hinj
+
+-- CORRUPTED input (indep 2): the nonzero hypothesis on real eigenvectors dropped. This must FAIL.
+open Matrix in
+example {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    (T : Matrix n n ℝ) (r : ι → ℝ) (v : ι → n → ℝ)
+    (hv : ∀ i, T *ᵥ v i = r i • v i)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k))))) :
+    LinearIndependent ℝ
+      (Sum.elim v (Sum.elim (fun k j => (z k j).re) (fun k j => (z k j).im))) :=
+  CvS.real_family_indep T r v hv hz ζ z hz hz0 hinj
+
+-- CORRUPTED input (indep 3): wrong per-term identity (factor 2 dropped). This must FAIL.
+open Matrix in
+example (g₁ g₂ : ℝ) (z : ℂ) :
+    ((g₁ : ℂ) - Complex.I * g₂) * z + ((g₁ : ℂ) + Complex.I * g₂) * star z
+      = (((g₁ * z.re + g₂ * z.im) : ℝ) : ℂ) :=
+  CvS.re_im_combo g₁ g₂ z

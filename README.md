@@ -34,6 +34,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero` | Lemma 5.6 step 4a: a complex eigenvector with non-real eigenvalue has zero hermitian $`B`$-norm | **proved** |
 | `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth` | Lemma 5.6 step 4b: $`B(u,u)+B(w,w)=0`$; real eigenvectors are $`B`$-orthogonal to $`u,w`$ | **proved** |
 | `CvS.pair_orth`, `CvS.plane_split` | Lemma 5.6 step 4c: different pairs are $`B`$-orthogonal; each pair's plane splits into one positive and one negative direction | **proved** |
+| `CvS.re_im_combo`, `CvS.real_family_indep` | Lemma 5.6 step 4d: the real family $`\{v_i,\ \mathrm{Re}\,z_k,\ \mathrm{Im}\,z_k\}`$ is linearly independent | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.lock` | Theorem 6, resolvent lock | to be completed |
 
@@ -46,7 +47,7 @@ The statements compile against Mathlib (Lean v4.36.0-rc1).
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly twenty-four errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly twenty-seven errors expected
 ```
 
 ## License
