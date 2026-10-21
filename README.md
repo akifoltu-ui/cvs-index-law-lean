@@ -23,6 +23,8 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.isSymm_of_isCvS` | CvS matrices are symmetric | **proved** |
 | `CvS.commutator` | Lemma 5.1, $`[D,Q]=\beta\wedge\eta`$ | **proved** |
 | `CvS.commutator_shift` | the same for $`Q-\mu`$ | **proved** |
+| `CvS.Dprime_mulVec_self` | Lemma 5.2(a), $`D'_\varphi\xi=0`$ | **proved** |
+| `CvS.det_Dprime` | Lemma 5.2(b), rank-one determinant | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.lock` | Theorem 6, resolvent lock | to be completed |
 
@@ -35,7 +37,7 @@ The statements compile against Mathlib (Lean v4.36.0-rc1).
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly three errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly four errors expected
 ```
 
 ## License
