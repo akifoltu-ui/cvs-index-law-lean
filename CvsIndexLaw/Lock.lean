@@ -21,6 +21,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.commutator`: CvS Lemma 5.1, `[D, Q] = β ∧ η` (also for `Q - μ`).
 * `CvS.Dprime`, `CvS.det_Dprime`: Lemma 5.2, the rank-one determinant.
 * `CvS.Qlam_Dprime_isSymm`: Lemma 5.3, `D'_φ` is self-adjoint for the form of `Q_λ`.
+* `CvS.nondeg_even`: Lemma 5.4, `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0` in the even sector.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -152,7 +153,8 @@ theorem Dprime_sub_eq {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ) 
 -- Lemma 5.2 helper: ∏_{j≠k} (j - s) = (∏_j (j - s)) / (k - s).
 theorem prod_erase_eq_div {N : ℕ} (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0)
     (k : Idx N) :
-    ∏ j ∈ univ.erase k, ((lab j : ℝ) - s) = (∏ j : Idx N, ((lab j : ℝ) - s)) / ((lab k : ℝ) - s) := by
+    ∏ j ∈ univ.erase k, ((lab j : ℝ) - s)
+      = (∏ j : Idx N, ((lab j : ℝ) - s)) / ((lab k : ℝ) - s) := by
   rw [eq_div_iff (hs k)]
   exact Finset.prod_erase_mul univ (fun j : Idx N => (lab j : ℝ) - s) (mem_univ k)
 
@@ -310,6 +312,97 @@ theorem Qlam_Dprime_isSymm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx
   rw [hentry j i, hentry i j, hv i, hv j, hAsym i j]
   linear_combination hcomm i j - (b i - b j) * hcinv
     + (b i - b j) * (∑ k, (x + y * b k) * ξ k)⁻¹ * hcexp
+
+/-- Labels are odd under the reflection: `lab (rev i) = - lab i`. -/
+theorem lab_rev {N : ℕ} (i : Idx N) : lab (Fin.rev i) = - lab i := by
+  have := i.isLt
+  simp only [lab, Fin.val_rev]
+  omega
+
+/-- The only index with label `0` is `e₀`. -/
+theorem lab_eq_zero_iff {N : ℕ} (i : Idx N) : lab i = 0 ↔ i = e0 N := by
+  constructor
+  · intro h
+    apply Fin.ext
+    show (i : ℕ) = N
+    simp only [lab] at h
+    omega
+  · rintro rfl
+    simp [lab, e0]
+
+/-- An odd vector is orthogonal to an even one: `∑ b_k ξ_k = 0`. -/
+theorem sum_odd_mul_even_eq_zero {N : ℕ} (b ξ : Idx N → ℝ)
+    (hb : ∀ i, b (Fin.rev i) = - b i) (hξ : ∀ i, ξ (Fin.rev i) = ξ i) :
+    ∑ k, b k * ξ k = 0 := by
+  have h : ∑ k, b (Fin.rev k) * ξ (Fin.rev k) = ∑ k, b k * ξ k :=
+    Fintype.sum_equiv Fin.revPerm _ _ (fun k => rfl)
+  simp only [hb, hξ, neg_mul, Finset.sum_neg_distrib] at h
+  linarith
+
+/-- `(Q_λ D ξ)_i = ⟨β, ξ⟩ - b_i ⟨η, ξ⟩` whenever `Q_λ ξ = 0`. -/
+theorem Qlam_D_apply {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0) (i : Idx N) :
+    ∑ k, (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) i k * ((lab k : ℝ) * ξ k)
+      = (∑ k, b k * ξ k) - b i * ∑ k, ξ k := by
+  have hcs := commutator_shift hC lam
+  set A := Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ) with hA
+  have hcomm : ∀ i j, (lab i : ℝ) * A i j - A i j * (lab j : ℝ) = b i - b j := by
+    intro i j
+    have := congrArg (fun M => M i j) hcs
+    simpa [D, wedge, Matrix.sub_apply, Matrix.diagonal_mul, Matrix.mul_diagonal,
+      Matrix.of_apply] using this
+  have h0 : ∑ k, A i k * ξ k = 0 := by
+    have := congrFun hξ i
+    simpa [Matrix.mulVec, dotProduct] using this
+  have h1 : ∑ k, ((lab i : ℝ) * A i k - A i k * (lab k : ℝ)) * ξ k
+      = ∑ k, (b i - b k) * ξ k :=
+    Finset.sum_congr rfl fun k _ => by rw [hcomm i k]
+  have e1 : ∑ k, ((lab i : ℝ) * A i k - A i k * (lab k : ℝ)) * ξ k
+      = (lab i : ℝ) * ∑ k, A i k * ξ k - ∑ k, A i k * ((lab k : ℝ) * ξ k) := by
+    rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    ring
+  have e2 : ∑ k, (b i - b k) * ξ k = b i * ∑ k, ξ k - ∑ k, b k * ξ k := by
+    rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    ring
+  rw [e1, e2, h0] at h1
+  linarith
+
+/-- Lemma 5.4 (non-degeneracy), even sector. If `λ` is simple with even eigenvector
+`ξ ∉ ℝ e₀`, then `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0`. Simplicity is stated as: every vector
+in the kernel of `Q - λ` is a multiple of `ξ`. -/
+theorem nondeg_even {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0)
+    (hsimple : ∀ w : Idx N → ℝ,
+      (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec w = 0 → ∃ t : ℝ, w = t • ξ)
+    (heven : ∀ i, ξ (Fin.rev i) = ξ i) (hne : ∃ k, k ≠ e0 N ∧ ξ k ≠ 0) :
+    ∑ k, b k * ξ k = 0 ∧ ∑ k, ξ k ≠ 0 := by
+  have hB : ∑ k, b k * ξ k = 0 := sum_odd_mul_even_eq_zero b ξ hC.b_odd heven
+  refine ⟨hB, fun hE => ?_⟩
+  have hv : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec
+      (fun k => (lab k : ℝ) * ξ k) = 0 := by
+    ext i
+    have := Qlam_D_apply hC lam ξ hξ i
+    rw [hB, hE] at this
+    simpa [Matrix.mulVec, dotProduct] using this
+  obtain ⟨t, ht⟩ := hsimple _ hv
+  have hpt : ∀ i, (lab i : ℝ) * ξ i = t * ξ i := fun i => by
+    have := congrFun ht i
+    simpa using this
+  have hzero : ∀ i, (lab i : ℝ) * ξ i = 0 := by
+    intro i
+    have h1 := hpt i
+    have h2 := hpt (Fin.rev i)
+    rw [lab_rev, heven] at h2
+    push_cast at h2
+    linarith
+  obtain ⟨k, hk, hξk⟩ := hne
+  have hz : lab k ≠ 0 := fun h => hk ((lab_eq_zero_iff k).mp h)
+  have hlab : (lab k : ℝ) ≠ 0 := by exact_mod_cast hz
+  exact hξk ((mul_eq_zero.mp (hzero k)).resolve_left hlab)
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:
