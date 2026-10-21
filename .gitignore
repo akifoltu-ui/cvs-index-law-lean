@@ -3,3 +3,5 @@ build_log*.txt
 deneme_*.txt
 kontrol/Deneme_*.lean
 build_log*.txt
+
+*.txt
