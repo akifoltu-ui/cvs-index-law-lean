@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.10 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.13 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly FIFTEEN errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly TWENTY-FOUR errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -173,3 +173,83 @@ example {n : Type*} [Fintype n] [DecidableEq n] (A P : Matrix n n ℝ)
     (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (A *ᵥ x)) :
     sigNeg q = (Finset.univ.filter (fun i => d i < 0)).card :=
   CvS.sigNeg_of_congr_diag A P d hD q hq
+
+-- CORRUPTED input (complex 1): field orthogonality for EQUAL eigenvalues. This must FAIL.
+open Matrix in
+example {K : Type*} [Field K] {n : Type*} [Fintype n] {B T : Matrix n n K}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {v w : n → K} {r : K}
+    (hv : T *ᵥ v = r • v) (hw : T *ᵥ w = r • w) (hrr : r = r) :
+    v ⬝ᵥ (B *ᵥ w) = 0 :=
+  CvS.eigvec_orth_field hB hBT hv hw hrr
+
+-- CORRUPTED input (complex 2): conjugate eigenvector claimed with the UNconjugated eigenvalue.
+open Matrix in
+example {n : Type*} [Fintype n] {T : Matrix n n ℝ} {z : n → ℂ} {ζ : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) :
+    T.map (algebraMap ℝ ℂ) *ᵥ star z = ζ • star z :=
+  CvS.conj_eigvec hz
+
+-- CORRUPTED input (complex 3): hermitian norm zero claimed for a REAL eigenvalue (ζ = conj ζ).
+open Matrix in
+example {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z : n → ℂ} {ζ : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hζ : ζ = star ζ) :
+    z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ star z) = 0 :=
+  CvS.herm_norm_zero hB hBT hz hζ
+
+-- CORRUPTED input (parts 1): the two norms claimed EQUAL (u-norm minus w-norm = 0). This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z : n → ℂ} {ζ : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hζ : ζ ≠ star ζ) :
+    (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (z i).re)
+      - (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (z i).im) = 0 :=
+  CvS.herm_split hB hBT hz hζ
+
+-- CORRUPTED input (parts 2): real and imaginary parts swapped. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] (B : Matrix n n ℝ) (v : n → ℝ) (z : n → ℂ) :
+    ((fun i => (v i : ℂ)) ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ z)).re
+        = v ⬝ᵥ (B *ᵥ fun i => (z i).im) ∧
+      ((fun i => (v i : ℂ)) ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ z)).im
+        = v ⬝ᵥ (B *ᵥ fun i => (z i).re) :=
+  CvS.real_pair_re_im B v z
+
+-- CORRUPTED input (parts 3): cross orthogonality with EQUAL eigenvalues. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {v : n → ℝ} {r : ℝ} (hv : T *ᵥ v = r • v)
+    {z : n → ℂ} {ζ : ℂ} (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hne : (r : ℂ) = ζ) :
+    v ⬝ᵥ (B *ᵥ fun i => (z i).re) = 0 ∧ v ⬝ᵥ (B *ᵥ fun i => (z i).im) = 0 :=
+  CvS.cross_orth hB hBT hv hz hne
+
+-- CORRUPTED input (plane 1): pair orthogonality without excluding the conjugate (ζ = conj ω).
+open Matrix in
+example {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z y : n → ℂ} {ζ ω : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hy : T.map (algebraMap ℝ ℂ) *ᵥ y = ω • y)
+    (h1 : ζ ≠ ω) (h2 : ζ = star ω) :
+    (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).re) = 0 ∧
+      (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).im) = 0 ∧
+      (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).re) = 0 ∧
+      (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).im) = 0 :=
+  CvS.pair_orth hB hBT hz hy h1 h2
+
+-- CORRUPTED input (plane 2): plane split claimed with norms of the SAME sign. This must FAIL.
+open Matrix in
+example (a c : ℝ) (h : a ≠ 0 ∨ c ≠ 0) :
+    ∃ α β γ δ : ℝ, α * γ * a + (α * δ + β * γ) * c - β * δ * a = 0 ∧
+      0 < (α ^ 2 * a + 2 * α * β * c - β ^ 2 * a) * (γ ^ 2 * a + 2 * γ * δ * c - δ ^ 2 * a) ∧
+      α * δ - β * γ ≠ 0 :=
+  CvS.plane_split_num a c h
+
+-- CORRUPTED input (plane 3): wrong sign in the real part of the bilinear pairing. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z y : n → ℂ) :
+    (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ y)).re
+        = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).re)
+          + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).im) ∧
+      (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ y)).im
+        = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).im)
+          + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).re) :=
+  CvS.cc_re_im B z y

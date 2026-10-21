@@ -26,6 +26,9 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.kappa_eq_sigNeg`: eigenvalue count below `μ` equals `sigNeg` of `Q - μ`.
 * `CvS.eigvec_orth`, `CvS.block2_sigNeg`: Lemma 5.6 (Pontryagin balance), steps 1-2.
 * `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family`: Lemma 5.6, step 3 (counting).
+* `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero`: Lemma 5.6, step 4a.
+* `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth`: Lemma 5.6, step 4b.
+* `CvS.pair_orth`, `CvS.plane_split` (+ helpers): Lemma 5.6, step 4c.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -643,6 +646,221 @@ theorem sigNeg_of_orth_family {n : Type*} [Fintype n] [DecidableEq n] (B : Matri
     simp only [zero_mul, mul_zero] at h1
     exact (Finset.prod_ne_zero_iff.mpr fun i _ => hnz i) h1.symm
   exact sigNeg_of_congr_diag B P d (isUnit_iff_ne_zero.mpr hdet) hD q hq
+
+/-- Lemma 5.6, step 4a(i): step 1 over an arbitrary field. -/
+theorem eigvec_orth_field {K : Type*} [Field K] {n : Type*} [Fintype n] {B T : Matrix n n K}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {v w : n → K} {r s : K}
+    (hv : T *ᵥ v = r • v) (hw : T *ᵥ w = s • w) (hrs : r ≠ s) :
+    v ⬝ᵥ (B *ᵥ w) = 0 := by
+  have key : v ⬝ᵥ ((B * T) *ᵥ w) = (T *ᵥ v) ⬝ᵥ (B *ᵥ w) := by
+    rw [← hBT, transpose_mul, hB, ← mulVec_mulVec, mulVec_transpose, dotProduct_comm v,
+      ← dotProduct_mulVec, dotProduct_comm]
+  have hs : v ⬝ᵥ ((B * T) *ᵥ w) = s * (v ⬝ᵥ (B *ᵥ w)) := by
+    rw [← mulVec_mulVec, hw, mulVec_smul, dotProduct_smul, smul_eq_mul]
+  have hr : (T *ᵥ v) ⬝ᵥ (B *ᵥ w) = r * (v ⬝ᵥ (B *ᵥ w)) := by
+    rw [hv, smul_dotProduct, smul_eq_mul]
+  have h0 : (r - s) * (v ⬝ᵥ (B *ᵥ w)) = 0 := by
+    rw [sub_mul, sub_eq_zero, ← hr, ← key, hs]
+  rcases mul_eq_zero.mp h0 with h | h
+  · exact absurd (sub_eq_zero.mp h) hrs
+  · exact h
+
+/-- Lemma 5.6, step 4a(ii): for a real matrix, conjugating an eigenvector conjugates the
+eigenvalue. -/
+theorem conj_eigvec {n : Type*} [Fintype n] {T : Matrix n n ℝ} {z : n → ℂ} {ζ : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) :
+    T.map (algebraMap ℝ ℂ) *ᵥ star z = star ζ • star z := by
+  ext i
+  have h := congrArg star (congrFun hz i)
+  simp only [Matrix.mulVec, dotProduct, Matrix.map_apply, Pi.smul_apply, smul_eq_mul,
+    star_sum, star_mul', Pi.star_apply] at h ⊢
+  simpa [Complex.star_def, Complex.conj_ofReal, mul_comm] using h
+
+/-- Lemma 5.6, step 4a(iii): a complex eigenvector of a `B`-self-adjoint real `T` with
+non-real eigenvalue has zero hermitian `B`-norm: `z ⬝ᵥ B (conj z) = 0`. -/
+theorem herm_norm_zero {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z : n → ℂ} {ζ : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hζ : ζ ≠ star ζ) :
+    z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ star z) = 0 := by
+  have hBc : (B.map (algebraMap ℝ ℂ))ᵀ = B.map (algebraMap ℝ ℂ) := by
+    rw [← Matrix.transpose_map, hB]
+  have hBTc : (B.map (algebraMap ℝ ℂ) * T.map (algebraMap ℝ ℂ))ᵀ
+      = B.map (algebraMap ℝ ℂ) * T.map (algebraMap ℝ ℂ) := by
+    rw [← Matrix.map_mul, ← Matrix.transpose_map, hBT]
+  exact eigvec_orth_field hBc hBTc hz (conj_eigvec hz) hζ
+
+/-- Lemma 5.6, step 4b: `Re (z ⬝ B conj z) = B(u,u) + B(w,w)` for `z = u + i w`. -/
+theorem herm_re {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z : n → ℂ) :
+    (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ star z)).re
+      = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (z i).re)
+        + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (z i).im) := by
+  simp only [dotProduct, Matrix.mulVec, Matrix.map_apply, Pi.star_apply, Finset.mul_sum,
+    Complex.re_sum]
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  simp [Complex.mul_re, Complex.mul_im]
+
+/-- Lemma 5.6, step 4b: for a non-real eigenvalue, `B(u,u) + B(w,w) = 0`. -/
+theorem herm_split {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z : n → ℂ} {ζ : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hζ : ζ ≠ star ζ) :
+    (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (z i).re)
+      + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (z i).im) = 0 := by
+  have h := congrArg Complex.re (herm_norm_zero hB hBT hz hζ)
+  rw [herm_re B z] at h
+  simpa using h
+
+/-- Lemma 5.6, step 4b: real and imaginary parts of `v ⬝ B z` for real `v`. -/
+theorem real_pair_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (v : n → ℝ) (z : n → ℂ) :
+    ((fun i => (v i : ℂ)) ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ z)).re
+        = v ⬝ᵥ (B *ᵥ fun i => (z i).re) ∧
+      ((fun i => (v i : ℂ)) ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ z)).im
+        = v ⬝ᵥ (B *ᵥ fun i => (z i).im) := by
+  simp only [dotProduct, Matrix.mulVec, Matrix.map_apply, Finset.mul_sum, Complex.re_sum,
+    Complex.im_sum]
+  constructor
+  · refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    simp [Complex.mul_re, Complex.mul_im]
+  · refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    simp [Complex.mul_re, Complex.mul_im]
+
+/-- Lemma 5.6, step 4b: a real eigenvector is `B`-orthogonal to both parts of `z`. -/
+theorem cross_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {v : n → ℝ} {r : ℝ} (hv : T *ᵥ v = r • v)
+    {z : n → ℂ} {ζ : ℂ} (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hne : (r : ℂ) ≠ ζ) :
+    v ⬝ᵥ (B *ᵥ fun i => (z i).re) = 0 ∧ v ⬝ᵥ (B *ᵥ fun i => (z i).im) = 0 := by
+  have hBc : (B.map (algebraMap ℝ ℂ))ᵀ = B.map (algebraMap ℝ ℂ) := by
+    rw [← Matrix.transpose_map, hB]
+  have hBTc : (B.map (algebraMap ℝ ℂ) * T.map (algebraMap ℝ ℂ))ᵀ
+      = B.map (algebraMap ℝ ℂ) * T.map (algebraMap ℝ ℂ) := by
+    rw [← Matrix.map_mul, ← Matrix.transpose_map, hBT]
+  have hvc : T.map (algebraMap ℝ ℂ) *ᵥ (fun i => (v i : ℂ)) = (r : ℂ) • (fun i => (v i : ℂ)) := by
+    ext i
+    have h := congrArg (fun x : ℝ => (x : ℂ)) (congrFun hv i)
+    simpa [Matrix.mulVec, dotProduct, Complex.ofReal_sum] using h
+  have h0 := eigvec_orth_field hBc hBTc hvc hz hne
+  obtain ⟨hre, him⟩ := real_pair_re_im B v z
+  rw [h0] at hre him
+  exact ⟨by simpa using hre.symm, by simpa using him.symm⟩
+
+/-- Lemma 5.6, step 4c: Re/Im of the bilinear pairing of two complex vectors, in terms of
+real and imaginary parts. -/
+theorem cc_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z y : n → ℂ) :
+    (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ y)).re
+        = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).re)
+          - (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).im) ∧
+      (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ y)).im
+        = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).im)
+          + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).re) := by
+  simp only [dotProduct, Matrix.mulVec, Matrix.map_apply, Finset.mul_sum, Complex.re_sum,
+    Complex.im_sum]
+  constructor
+  · rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    simp [Complex.mul_re, Complex.mul_im]
+  · rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    simp [Complex.mul_re, Complex.mul_im]
+
+/-- Same with the second vector conjugated. -/
+theorem cc_conj_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z y : n → ℂ) :
+    (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ star y)).re
+        = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).re)
+          + (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).im) ∧
+      (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ star y)).im
+        = (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).re)
+          - (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).im) := by
+  simp only [dotProduct, Matrix.mulVec, Matrix.map_apply, Pi.star_apply, Finset.mul_sum,
+    Complex.re_sum, Complex.im_sum]
+  constructor
+  · rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    simp [Complex.mul_re, Complex.mul_im]
+  · rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    simp [Complex.mul_re, Complex.mul_im]
+    ring
+
+/-- Lemma 5.6, step 4c(1): two complex eigenvectors from different non-real pairs: their real
+and imaginary parts are pairwise `B`-orthogonal. -/
+theorem pair_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
+    (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z y : n → ℂ} {ζ ω : ℂ}
+    (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hy : T.map (algebraMap ℝ ℂ) *ᵥ y = ω • y)
+    (h1 : ζ ≠ ω) (h2 : ζ ≠ star ω) :
+    (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).re) = 0 ∧
+      (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (y i).im) = 0 ∧
+      (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).re) = 0 ∧
+      (fun i => (z i).im) ⬝ᵥ (B *ᵥ fun i => (y i).im) = 0 := by
+  have hBc : (B.map (algebraMap ℝ ℂ))ᵀ = B.map (algebraMap ℝ ℂ) := by
+    rw [← Matrix.transpose_map, hB]
+  have hBTc : (B.map (algebraMap ℝ ℂ) * T.map (algebraMap ℝ ℂ))ᵀ
+      = B.map (algebraMap ℝ ℂ) * T.map (algebraMap ℝ ℂ) := by
+    rw [← Matrix.map_mul, ← Matrix.transpose_map, hBT]
+  have e1 := eigvec_orth_field hBc hBTc hz hy h1
+  have e2 := eigvec_orth_field hBc hBTc hz (conj_eigvec hy) h2
+  obtain ⟨r1, i1⟩ := cc_re_im B z y
+  obtain ⟨r2, i2⟩ := cc_conj_re_im B z y
+  rw [e1] at r1 i1
+  rw [e2] at r2 i2
+  simp only [Complex.zero_re, Complex.zero_im] at r1 i1 r2 i2
+  exact ⟨by linarith, by linarith, by linarith, by linarith⟩
+
+/-- Lemma 5.6, step 4c: numerical core of the plane split (no square roots). -/
+theorem plane_split_num (a c : ℝ) (h : a ≠ 0 ∨ c ≠ 0) :
+    ∃ α β γ δ : ℝ, α * γ * a + (α * δ + β * γ) * c - β * δ * a = 0 ∧
+      (α ^ 2 * a + 2 * α * β * c - β ^ 2 * a) * (γ ^ 2 * a + 2 * γ * δ * c - δ ^ 2 * a) < 0 ∧
+      α * δ - β * γ ≠ 0 := by
+  by_cases ha : a = 0
+  · have hc : c ≠ 0 := h.resolve_left (fun h' => h' ha)
+    refine ⟨1, 1, 1, -1, ?_, ?_, ?_⟩
+    · rw [ha]; ring
+    · rw [ha]; nlinarith [mul_self_pos.mpr hc]
+    · norm_num
+  · refine ⟨1, 0, -c, a, ?_, ?_, ?_⟩
+    · ring
+    · nlinarith [mul_pos (mul_self_pos.mpr ha) (mul_self_pos.mpr ha), mul_self_nonneg (a * c)]
+    · simpa using ha
+
+theorem bil_expand {n : Type*} [Fintype n] (B : Matrix n n ℝ) (u w : n → ℝ) (α β γ δ : ℝ) :
+    (α • u + β • w) ⬝ᵥ (B *ᵥ (γ • u + δ • w))
+      = α * γ * (u ⬝ᵥ (B *ᵥ u)) + α * δ * (u ⬝ᵥ (B *ᵥ w))
+        + β * γ * (w ⬝ᵥ (B *ᵥ u)) + β * δ * (w ⬝ᵥ (B *ᵥ w)) := by
+  simp only [Matrix.mulVec_add, Matrix.mulVec_smul, dotProduct_add, add_dotProduct,
+    dotProduct_smul, smul_dotProduct, smul_eq_mul]
+  ring
+
+theorem bil_symm {n : Type*} [Fintype n] {B : Matrix n n ℝ} (hB : Bᵀ = B) (x y : n → ℝ) :
+    x ⬝ᵥ (B *ᵥ y) = y ⬝ᵥ (B *ᵥ x) := by
+  rw [dotProduct_mulVec, ← mulVec_transpose, hB, dotProduct_comm]
+
+/-- Lemma 5.6, step 4c(2): inside the plane of `u, w` with `B(u,u) + B(w,w) = 0` (and `B` not
+identically zero there), two `B`-orthogonal combinations with norms of opposite sign. -/
+theorem plane_split {n : Type*} [Fintype n] {B : Matrix n n ℝ} (hB : Bᵀ = B) (u w : n → ℝ)
+    (hsum : u ⬝ᵥ (B *ᵥ u) + w ⬝ᵥ (B *ᵥ w) = 0)
+    (hnd : u ⬝ᵥ (B *ᵥ u) ≠ 0 ∨ u ⬝ᵥ (B *ᵥ w) ≠ 0) :
+    ∃ α β γ δ : ℝ, (α • u + β • w) ⬝ᵥ (B *ᵥ (γ • u + δ • w)) = 0 ∧
+      ((α • u + β • w) ⬝ᵥ (B *ᵥ (α • u + β • w)))
+        * ((γ • u + δ • w) ⬝ᵥ (B *ᵥ (γ • u + δ • w))) < 0 ∧
+      α * δ - β * γ ≠ 0 := by
+  obtain ⟨α, β, γ, δ, h1, h2, h3⟩ :=
+    plane_split_num (u ⬝ᵥ (B *ᵥ u)) (u ⬝ᵥ (B *ᵥ w)) hnd
+  have hw : w ⬝ᵥ (B *ᵥ w) = -(u ⬝ᵥ (B *ᵥ u)) := by linarith
+  refine ⟨α, β, γ, δ, ?_, ?_, h3⟩
+  · rw [bil_expand, bil_symm hB w u, hw]
+    linear_combination h1
+  · rw [bil_expand, bil_expand, bil_symm hB w u, hw]
+    convert h2 using 1
+    ring
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

@@ -31,6 +31,9 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.kappa_eq_sigNeg` | bridge: eigenvalue count below $`\mu`$ = `sigNeg` of $`Q-\mu`$ (Sylvester) | **proved** |
 | `CvS.eigvec_orth`, `CvS.block2_sigNeg` | Lemma 5.6 steps: eigenvector orthogonality; a 2×2 block with $`\det<0`$ has one negative direction | **proved** |
 | `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family` | Lemma 5.6 step 3: a $`B`$-orthogonal family with nonzero norms counts $`\kappa`$ | **proved** |
+| `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero` | Lemma 5.6 step 4a: a complex eigenvector with non-real eigenvalue has zero hermitian $`B`$-norm | **proved** |
+| `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth` | Lemma 5.6 step 4b: $`B(u,u)+B(w,w)=0`$; real eigenvectors are $`B`$-orthogonal to $`u,w`$ | **proved** |
+| `CvS.pair_orth`, `CvS.plane_split` | Lemma 5.6 step 4c: different pairs are $`B`$-orthogonal; each pair's plane splits into one positive and one negative direction | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.lock` | Theorem 6, resolvent lock | to be completed |
 
@@ -43,7 +46,7 @@ The statements compile against Mathlib (Lean v4.36.0-rc1).
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly fifteen errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly twenty-four errors expected
 ```
 
 ## License
