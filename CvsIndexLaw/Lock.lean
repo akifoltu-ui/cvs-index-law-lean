@@ -25,6 +25,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.Qlam_norm`: Lemma 5.5, `Q_λ(w_s, w_s) = F G' - F' G`.
 * `CvS.kappa_eq_sigNeg`: eigenvalue count below `μ` equals `sigNeg` of `Q - μ`.
 * `CvS.eigvec_orth`, `CvS.block2_sigNeg`: Lemma 5.6 (Pontryagin balance), steps 1-2.
+* `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family`: Lemma 5.6, step 3 (counting).
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -582,6 +583,66 @@ theorem block2_sigNeg (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian)
   rcases mul_neg_iff.mp hprod with ⟨h0, h1⟩ | ⟨h0, h1⟩
   · rw [if_neg (not_lt.mpr h0.le), if_pos h1]
   · rw [if_pos h0, if_neg (not_lt.mpr h1.le)]
+
+open QuadraticMap in
+/-- Lemma 5.6, step 3a: if `Pᵀ A P = diagonal d` with `P` invertible, then `sigNeg` of
+`x ↦ x ⬝ᵥ A x` counts the negative entries of `d`. -/
+theorem sigNeg_of_congr_diag {n : Type*} [Fintype n] [DecidableEq n] (A P : Matrix n n ℝ)
+    (d : n → ℝ) (hP : IsUnit P.det) (hD : Pᵀ * A * P = diagonal d)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (A *ᵥ x)) :
+    sigNeg q = (univ.filter (fun i => d i < 0)).card := by
+  have hD' : Pᵀ * (A * P) = diagonal d := by rw [← Matrix.mul_assoc, hD]
+  have key : ∀ (c y : n → ℝ), (P *ᵥ c) ⬝ᵥ y = c ⬝ᵥ (Pᵀ *ᵥ y) := by
+    intro c y
+    rw [← vecMul_transpose, dotProduct_mulVec]
+  let L : (n → ℝ) ≃ₗ[ℝ] (n → ℝ) :=
+    LinearEquiv.ofLinear (Matrix.toLin' P) (Matrix.toLin' P⁻¹)
+      (by rw [← Matrix.toLin'_mul, Matrix.mul_nonsing_inv P hP, Matrix.toLin'_one])
+      (by rw [← Matrix.toLin'_mul, Matrix.nonsing_inv_mul P hP, Matrix.toLin'_one])
+  let e : (weightedSumSquares ℝ d).IsometryEquiv q :=
+    { L with
+      map_app' := by
+        intro c
+        change q (P *ᵥ c) = weightedSumSquares ℝ d c
+        rw [hq, weightedSumSquares_apply, key]
+        simp only [Matrix.mulVec_mulVec]
+        rw [hD']
+        simp only [dotProduct, Matrix.mulVec_diagonal, smul_eq_mul]
+        exact Finset.sum_congr rfl fun i _ => by ring }
+  have hE : QuadraticMap.Equivalent q (weightedSumSquares ℝ d) := ⟨e.symm⟩
+  rw [QuadraticForm.sigNeg_of_equiv_weightedSumSquares hE]
+  have hset : {i | d i < 0} = (↑(univ.filter (fun i => d i < 0)) : Set n) := by
+    ext i; simp
+  rw [hset, Set.ncard_coe_finset]
+
+/-- Lemma 5.6, step 3b: `n` pairwise `B`-orthogonal vectors with nonzero norms: `sigNeg`
+counts the negative norms. -/
+theorem sigNeg_of_orth_family {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (v : n → n → ℝ) (horth : ∀ i j, i ≠ j → v i ⬝ᵥ (B *ᵥ v j) = 0)
+    (hnz : ∀ i, v i ⬝ᵥ (B *ᵥ v i) ≠ 0)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card := by
+  set P : Matrix n n ℝ := Matrix.of fun a i => v i a with hPdef
+  set d : n → ℝ := fun i => v i ⬝ᵥ (B *ᵥ v i) with hd
+  have hentry : ∀ i j, (Pᵀ * B * P) i j = v i ⬝ᵥ (B *ᵥ v j) := by
+    intro i j
+    simp only [P, Matrix.mul_apply, Matrix.transpose_apply, Matrix.of_apply, dotProduct,
+      Matrix.mulVec, Finset.sum_mul, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
+  have hD : Pᵀ * B * P = diagonal d := by
+    ext i j
+    rw [hentry]
+    by_cases hij : i = j
+    · subst hij; simp [d]
+    · rw [horth i j hij, Matrix.diagonal_apply_ne _ hij]
+  have hdet : P.det ≠ 0 := by
+    intro h0
+    have h1 := congrArg Matrix.det hD
+    rw [Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose, h0, Matrix.det_diagonal] at h1
+    simp only [zero_mul, mul_zero] at h1
+    exact (Finset.prod_ne_zero_iff.mpr fun i _ => hnz i) h1.symm
+  exact sigNeg_of_congr_diag B P d (isUnit_iff_ne_zero.mpr hdet) hD q hq
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

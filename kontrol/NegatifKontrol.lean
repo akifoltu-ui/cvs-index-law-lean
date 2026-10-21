@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.9 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.10 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly TWELVE errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly FIFTEEN errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -149,3 +149,27 @@ example (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian) (hdet : M.det < 0)
     (q : QuadraticForm ℝ (Fin 2 → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (M *ᵥ x)) :
     sigNeg q = 2 :=
   CvS.block2_sigNeg M hM hdet q hq
+
+-- CORRUPTED input (counting 1): congruence lemma claimed to count POSITIVE entries. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (A P : Matrix n n ℝ)
+    (d : n → ℝ) (hP : IsUnit P.det) (hD : Pᵀ * A * P = diagonal d)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (A *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => 0 < d i)).card :=
+  CvS.sigNeg_of_congr_diag A P d hP hD q hq
+
+-- CORRUPTED input (counting 2): family without the orthogonality hypothesis. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (v : n → n → ℝ) (hnz : ∀ i, v i ⬝ᵥ (B *ᵥ v i) ≠ 0)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card :=
+  CvS.sigNeg_of_orth_family B v hnz q hq
+
+-- CORRUPTED input (counting 3): congruence lemma used without invertibility of P. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (A P : Matrix n n ℝ)
+    (d : n → ℝ) (hD : Pᵀ * A * P = diagonal d)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (A *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => d i < 0)).card :=
+  CvS.sigNeg_of_congr_diag A P d hD q hq
