@@ -23,6 +23,7 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.Qlam_Dprime_isSymm`: Lemma 5.3, `D'_φ` is self-adjoint for the form of `Q_λ`.
 * `CvS.nondeg_even`: Lemma 5.4, `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0` in the even sector.
 * `CvS.Qlam_norm`: Lemma 5.5, `Q_λ(w_s, w_s) = F G' - F' G`.
+* `CvS.kappa_eq_sigNeg`: eigenvalue count below `μ` equals `sigNeg` of `Q - μ`.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -474,6 +475,68 @@ theorem Qlam_norm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → �
   simp_rw [hL, hAw, hT]
   rw [Finset.sum_sub_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
   ring
+
+open QuadraticMap in
+/-- Bridge to Mathlib's signature: the number of eigenvalues of `Q` below `μ` equals
+`sigNeg` of any quadratic form `x ↦ x ⬝ᵥ (Q - μ) x` (uniqueness part of Sylvester's law). -/
+theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHermitian) (μ : ℝ)
+    (q : QuadraticForm ℝ (Idx N → ℝ))
+    (hq : ∀ x, q x = x ⬝ᵥ ((Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ x)) :
+    sigNeg q = (univ.filter (fun i => hQ.eigenvalues i < μ)).card := by
+  set U : Matrix (Idx N) (Idx N) ℝ := (hQ.eigenvectorUnitary : Matrix (Idx N) (Idx N) ℝ) with hUdef
+  set w : Idx N → ℝ := fun i => hQ.eigenvalues i - μ with hw
+  have hUU : Uᵀ * U = 1 := by
+    have h := Unitary.coe_star_mul_self hQ.eigenvectorUnitary
+    simpa [Matrix.star_eq_conjTranspose] using h
+  have hUUt : U * Uᵀ = 1 := by
+    have h := Unitary.coe_mul_star_self hQ.eigenvectorUnitary
+    simpa [Matrix.star_eq_conjTranspose] using h
+  have hcol : ∀ j, Q *ᵥ (fun i => U i j) = hQ.eigenvalues j • (fun i => U i j) := by
+    intro j
+    have h := hQ.mulVec_eigenvectorBasis j
+    have hc : (fun i => U i j) = ⇑(hQ.eigenvectorBasis j) := funext fun i => rfl
+    rw [hc]
+    exact h
+  have hQU : Q * U = U * diagonal hQ.eigenvalues := by
+    ext i j
+    rw [Matrix.mul_diagonal]
+    have h := congrFun (hcol j) i
+    simpa [Matrix.mulVec, dotProduct, Matrix.mul_apply, mul_comm] using h
+  have hdiag : Uᵀ * Q * U = diagonal hQ.eigenvalues := by
+    rw [Matrix.mul_assoc, hQU, ← Matrix.mul_assoc, hUU, Matrix.one_mul]
+  have hD : Uᵀ * (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) * U = diagonal w := by
+    rw [Matrix.mul_sub, Matrix.sub_mul, hdiag, Matrix.mul_smul, Matrix.smul_mul,
+      Matrix.mul_one, hUU]
+    ext i j
+    by_cases hij : i = j
+    · subst hij; simp [w]
+    · simp [hij]
+  have hD' : Uᵀ * ((Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) * U) = diagonal w := by
+    rw [← Matrix.mul_assoc, hD]
+  have key : ∀ (c y : Idx N → ℝ), (U *ᵥ c) ⬝ᵥ y = c ⬝ᵥ (Uᵀ *ᵥ y) := by
+    intro c y
+    rw [← vecMul_transpose, dotProduct_mulVec]
+  let L : (Idx N → ℝ) ≃ₗ[ℝ] (Idx N → ℝ) :=
+    LinearEquiv.ofLinear (Matrix.toLin' U) (Matrix.toLin' Uᵀ)
+      (by rw [← Matrix.toLin'_mul, hUUt, Matrix.toLin'_one])
+      (by rw [← Matrix.toLin'_mul, hUU, Matrix.toLin'_one])
+  let e : (weightedSumSquares ℝ w).IsometryEquiv q :=
+    { L with
+      map_app' := by
+        intro c
+        show q (U *ᵥ c) = weightedSumSquares ℝ w c
+        rw [hq, weightedSumSquares_apply, key]
+        simp only [Matrix.mulVec_mulVec]
+        rw [hD']
+        simp only [dotProduct, Matrix.mulVec_diagonal, smul_eq_mul]
+        exact Finset.sum_congr rfl fun i _ => by ring }
+  have hE : QuadraticMap.Equivalent q (weightedSumSquares ℝ w) := ⟨e.symm⟩
+  rw [QuadraticForm.sigNeg_of_equiv_weightedSumSquares hE]
+  have hset :
+      {i | w i < 0} = (↑(univ.filter (fun i => hQ.eigenvalues i < μ)) : Set (Idx N)) := by
+    ext i
+    simp [w, sub_neg]
+  rw [hset, Set.ncard_coe_finset]
 
 open Classical in
 /-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:

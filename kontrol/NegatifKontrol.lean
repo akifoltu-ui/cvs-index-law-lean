@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.7 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.8 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly SEVEN errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly NINE errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -103,3 +103,27 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
       = (∑ k, ξ k / ((CvS.lab k : ℝ) - s) ^ 2) * (∑ k, b k * (ξ k / ((CvS.lab k : ℝ) - s)))
         - (∑ k, ξ k / ((CvS.lab k : ℝ) - s)) * (∑ k, b k * ξ k / ((CvS.lab k : ℝ) - s) ^ 2) :=
   CvS.Qlam_norm hC lam ξ hξ s hs
+
+-- CORRECT input: the bridge lemma applied as stated is accepted.
+open Matrix in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (hQ : Q.IsHermitian) (μ : ℝ)
+    (q : QuadraticForm ℝ (CvS.Idx N → ℝ))
+    (hq : ∀ x, q x = x ⬝ᵥ ((Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
+  CvS.kappa_eq_sigNeg Q hQ μ q hq
+
+-- CORRUPTED input (bridge 1): inequality flipped (counts eigenvalues ABOVE μ). This must FAIL.
+open Matrix in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (hQ : Q.IsHermitian) (μ : ℝ)
+    (q : QuadraticForm ℝ (CvS.Idx N → ℝ))
+    (hq : ∀ x, q x = x ⬝ᵥ ((Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => μ < hQ.eigenvalues i)).card :=
+  CvS.kappa_eq_sigNeg Q hQ μ q hq
+
+-- CORRUPTED input (bridge 2): form built from Q + μ instead of Q - μ. This must FAIL.
+open Matrix in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (hQ : Q.IsHermitian) (μ : ℝ)
+    (q : QuadraticForm ℝ (CvS.Idx N → ℝ))
+    (hq : ∀ x, q x = x ⬝ᵥ ((Q + μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
+  CvS.kappa_eq_sigNeg Q hQ μ q hq
