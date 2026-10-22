@@ -44,7 +44,8 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.card_roots_split` | Theorem 6 step: $`\#\{\text{real roots}\}+2\,\#\{\operatorname{Im}>0\}=\deg p`$ (separable real $`p`$) | **proved** |
 | `CvS.F_zero_of_root_c`, `CvS.vr_ne_zero`, `CvS.vc_ne_zero`, `CvS.inj_sum_elim`, `CvS.Nc_eq` | Theorem 6 step: eigenvectors nonzero, eigenvalues distinct, $`N_c=\#\{\operatorname{Im}>0\}`$ | **proved** |
 | `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker` | Theorem 5(a) step: Lemma 5.6 for a form with one-dimensional kernel | **proved** |
-| `CvS.index_even` | Theorem 5(a), index law | to be completed |
+| `CvS.simple_ker`, `CvS.eig_sign` | Theorem 5(a) steps: $`\ker(Q-\lambda)=\mathbb{R}\xi`$; $`Q_\lambda(v_s,v_s)<0\iff P_\xi'(s)\,P_{\beta\odot\xi}(s)>0`$ | **proved** |
+| `CvS.index_even` | **Theorem 5(a), index law (even sector)**: $`N_c(P_\xi)+d(\xi)=\kappa(\lambda)`$ | **proved** |
 | `CvS.exists_qform` | every real square matrix gives the quadratic form $`w^{\top}Aw`$ | **proved** |
 | `CvS.lock` | **Theorem 6, resolvent lock**: $`N_c(P_x)+d(x)+[x_0<0]=\kappa(\mu)`$ | **proved** |
 
@@ -52,12 +53,12 @@ Contributions are welcome: open an issue or a pull request. A natural reusable b
 
 ## Build
 
-The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 6 (`CvS.lock`) is fully proved; Theorem 5(a) (`CvS.index_even`) is the remaining statement.
+The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 5(a) (`CvS.index_even`) and Theorem 6 (`CvS.lock`) are fully proved; the library contains no `sorry` (axiom audit: `kontrol/Aksiyom.lean`).
 
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly fifty-seven errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly sixty errors expected
 ```
 
 ## License
@@ -66,6 +67,6 @@ Apache 2.0, the Mathlib license.
 
 ---
 
-**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. Rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; indeks yasasının (Teorem 5(a)) biçimselleştirilmesi sürmektedir ve katkıya açıktır.
+**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İndeks yasası (Teorem 5(a), `CvS.index_even`) ve rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; kütüphanede `sorry` yoktur (aksiyom denetimi: `kontrol/Aksiyom.lean`). Katkıya açıktır.
 
 _Lean statements and proofs drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._

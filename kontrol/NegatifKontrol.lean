@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.24 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.25 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly FIFTY-SEVEN errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly SIXTY errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -545,3 +545,34 @@ example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
     (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
     sigNeg q = (Finset.univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) ≤ 0)).card :=
   CvS.sigNeg_of_orth_family_ker B v horth i₀ hnz hv0 q hq
+
+-- CORRUPTED input (theorem5a 1): index law without the complex pairs. This must FAIL.
+open Classical in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → ℝ)
+    (hC : CvS.IsCvS Q a b) (hQ : Q.IsHermitian) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hvec : Q.mulVec ξ = lam • ξ) (hne : ∃ k, k ≠ CvS.e0 N ∧ ξ k ≠ 0)
+    (hsimple : Module.finrank ℝ (Module.End.eigenspace (Matrix.toLin' Q) lam) = 1)
+    (heven : ∀ i, ξ (Fin.rev i) = ξ i)
+    (hsep : (CvS.P ξ).Separable) (hout : ∀ j : CvS.Idx N, (CvS.P ξ).eval (CvS.lab j : ℝ) ≠ 0) :
+    CvS.d b ξ = (Finset.univ.filter (fun i => hQ.eigenvalues i < lam)).card :=
+  CvS.index_even Q a b hC hQ lam ξ hvec hne hsimple heven hsep hout
+
+-- CORRUPTED input (theorem5a 2): the kernel claimed to be {ξ} itself (t = 1). This must FAIL.
+open Matrix in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hvec : Q.mulVec ξ = lam • ξ) (hξ0 : ξ ≠ 0)
+    (hsimple : Module.finrank ℝ (Module.End.eigenspace (Matrix.toLin' Q) lam) = 1) :
+    ∀ w : CvS.Idx N → ℝ, (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ w = 0 → w = ξ :=
+  CvS.simple_ker Q lam ξ hvec hξ0 hsimple
+
+-- CORRUPTED input (theorem5a 3): sign condition reversed in the eigen case. This must FAIL.
+open Matrix in
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ ξ = 0)
+    (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hroot : (CvS.P ξ).eval s = 0) :
+    ((fun i => (CvS.lab i : ℝ) * ξ i / ((CvS.lab i : ℝ) - s))
+        ⬝ᵥ ((Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ))
+          *ᵥ (fun i => (CvS.lab i : ℝ) * ξ i / ((CvS.lab i : ℝ) - s))) < 0)
+      ↔ (Polynomial.derivative (CvS.P ξ)).eval s * (CvS.P (fun k => b k * ξ k)).eval s < 0 :=
+  CvS.eig_sign hC lam ξ hξ s hs hroot

@@ -43,6 +43,8 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.lock`: **Theorem 6 (resolvent lock)**, assembled from Lemma 5.6 and the steps above.
 * `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker`:
   Theorem 5(a), step E1 (Lemma 5.6 with a one-dimensional kernel).
+* `CvS.simple_ker`, `CvS.eig_sign`: Theorem 5(a), steps E2-E3.
+* `CvS.index_even`: **Theorem 5(a) (index law, even sector)**, assembled like Theorem 6.
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -2248,6 +2250,134 @@ theorem lock {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ)
   rw [← hk, hpb, hcount, Fintype.card_coe, ← hNc]
   omega
 
+/-- `(c • 1) *ᵥ u = c • u`. -/
+theorem smul_one_mulVec {N : ℕ} (c : ℝ) (u : Idx N → ℝ) :
+    (c • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ u = c • u := by
+  first
+    | (rw [Matrix.smul_one_eq_diagonal]; ext i; simp [Matrix.mulVec_diagonal])
+    | (ext i; simp [Matrix.mulVec, dotProduct, Matrix.one_apply])
+
+/-- Theorem 5(a), step E2: a simple eigenvalue has kernel `ℝ ξ`. -/
+theorem simple_ker {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hvec : Q.mulVec ξ = lam • ξ) (hξ0 : ξ ≠ 0)
+    (hsimple : Module.finrank ℝ (Module.End.eigenspace (Matrix.toLin' Q) lam) = 1) :
+    ∀ w : Idx N → ℝ, (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ w = 0 →
+      ∃ t : ℝ, w = t • ξ := by
+  have hmem : ∀ u : Idx N → ℝ, (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ u = 0 →
+      u ∈ Module.End.eigenspace (Matrix.toLin' Q) lam := by
+    intro u hu
+    rw [Module.End.mem_eigenspace_iff, Matrix.toLin'_apply]
+    rw [Matrix.sub_mulVec, smul_one_mulVec, sub_eq_zero] at hu
+    exact hu
+  have hξm : ξ ∈ Module.End.eigenspace (Matrix.toLin' Q) lam :=
+    hmem ξ (by rw [Matrix.sub_mulVec, smul_one_mulVec, hvec, sub_self])
+  intro w hw
+  have hnz : (⟨ξ, hξm⟩ : Module.End.eigenspace (Matrix.toLin' Q) lam) ≠ 0 := by
+    intro h
+    apply hξ0
+    have h' := congrArg Subtype.val h
+    simpa using h'
+  obtain ⟨c, hc⟩ := (finrank_eq_one_iff_of_nonzero' _ hnz).mp hsimple ⟨w, hmem w hw⟩
+  refine ⟨c, ?_⟩
+  have h' := congrArg Subtype.val hc
+  first
+    | exact h'.symm
+    | (simp only [SetLike.val_smul] at h'; exact h'.symm)
+    | simpa using h'.symm
+
+/-- Theorem 5(a), step E3: at a real zero of `P_ξ`, `Q_λ(v_s, v_s) < 0 ↔ P_ξ'(s) P_{β⊙ξ}(s) > 0`
+(Lemma 5.5 with `Q_λ ξ = 0`). -/
+theorem eig_sign {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ ξ = 0)
+    (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) (hroot : (P ξ).eval s = 0) :
+    ((fun i => (lab i : ℝ) * ξ i / ((lab i : ℝ) - s))
+        ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))
+          *ᵥ (fun i => (lab i : ℝ) * ξ i / ((lab i : ℝ) - s))) < 0)
+      ↔ 0 < (derivative (P ξ)).eval s * (P (fun k => b k * ξ k)).eval s := by
+  have hAsym : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))ᵀ
+      = Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ) := by
+    rw [Matrix.transpose_sub, Matrix.transpose_smul, Matrix.transpose_one,
+      (isSymm_of_isCvS hC).eq]
+  have hv : (fun i => (lab i : ℝ) * ξ i / ((lab i : ℝ) - s))
+      = ξ + s • (fun i => ξ i / ((lab i : ℝ) - s)) := by
+    funext i
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    have := hs i
+    field_simp
+    ring
+  have hnorm : (fun i => (lab i : ℝ) * ξ i / ((lab i : ℝ) - s))
+        ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))
+          *ᵥ (fun i => (lab i : ℝ) * ξ i / ((lab i : ℝ) - s)))
+      = s ^ 2 * ((fun i => ξ i / ((lab i : ℝ) - s))
+        ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))
+          *ᵥ (fun i => ξ i / ((lab i : ℝ) - s)))) := by
+    rw [hv]
+    simp only [Matrix.mulVec_add, Matrix.mulVec_smul, hξ, zero_add, add_dotProduct,
+      dotProduct_smul, smul_dotProduct, smul_eq_mul]
+    rw [bil_symm hAsym ξ, hξ, dotProduct_zero]
+    ring
+  have hdot : ∀ w : Idx N → ℝ, w ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ w)
+      = ∑ i, ∑ j, w i * (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) i j * w j := by
+    intro w
+    simp only [dotProduct, Matrix.mulVec, Finset.mul_sum, mul_assoc]
+  have hF := F_zero_of_root ξ s hs hroot
+  have hl0 : (lab (e0 N) : ℝ) = 0 := by
+    rw [show lab (e0 N) = 0 from (lab_eq_zero_iff _).mpr rfl]
+    simp
+  have hs0 : s ≠ 0 := by
+    have h := hs (e0 N)
+    rw [hl0, zero_sub, neg_ne_zero] at h
+    exact h
+  have hΔ : ∏ j : Idx N, ((lab j : ℝ) - s) ≠ 0 := Finset.prod_ne_zero_iff.mpr fun j _ => hs j
+  have hG : ∑ k, b k * ξ k / ((lab k : ℝ) - s) = ∑ k, b k * (ξ k / ((lab k : ℝ) - s)) :=
+    Finset.sum_congr rfl fun k _ => by ring
+  rw [hnorm, hdot, Qlam_norm hC lam ξ hξ s hs, hF, P_deriv_eval ξ s hs, P_eval_div _ s hs, hF,
+    hG]
+  have hs2 : 0 < s * s := mul_self_pos.mpr hs0
+  have hΔ2 : 0 < (∏ j : Idx N, ((lab j : ℝ) - s)) * (∏ j : Idx N, ((lab j : ℝ) - s)) :=
+    mul_self_pos.mpr hΔ
+  set F₂ := ∑ k, ξ k / ((lab k : ℝ) - s) ^ 2 with hF₂
+  set G := ∑ k, b k * (ξ k / ((lab k : ℝ) - s)) with hGdef
+  set Δ := ∏ j : Idx N, ((lab j : ℝ) - s) with hΔdef
+  have e1 : s ^ 2 * (0 * ∑ k, b k * ξ k / ((lab k : ℝ) - s) ^ 2 - F₂ * G)
+      = -((s * s) * (F₂ * G)) := by ring
+  have e2 : Δ * (F₂ - 0 * ∑ i : Idx N, ((lab i : ℝ) - s)⁻¹) * (Δ * G) = (Δ * Δ) * (F₂ * G) := by
+    ring
+  rw [e1, e2, neg_lt_zero, mul_pos_iff_of_pos_left hs2, mul_pos_iff_of_pos_left hΔ2]
+
+/-- Theorem 5(a): `v_s ≠ 0` when `ξ ∉ ℝ e₀`. -/
+theorem vr_ne_zero' {N : ℕ} (x : Idx N → ℝ) (hne : ∃ k, k ≠ e0 N ∧ x k ≠ 0) (s : ℝ)
+    (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) :
+    (fun i => (lab i : ℝ) * x i / ((lab i : ℝ) - s)) ≠ 0 := by
+  intro hv
+  obtain ⟨k, hk, hxk⟩ := hne
+  have h := congrFun hv k
+  simp only [Pi.zero_apply] at h
+  have hlk : (lab k : ℝ) ≠ 0 := by
+    intro h0
+    apply hk
+    exact (lab_eq_zero_iff k).mp (by exact_mod_cast h0)
+  rcases div_eq_zero_iff.mp h with h1 | h1
+  · exact hxk ((mul_eq_zero.mp h1).resolve_left hlk)
+  · exact hs k h1
+
+/-- Theorem 5(a): `v_ζ ≠ 0` when `ξ ∉ ℝ e₀` (complex `ζ`). -/
+theorem vc_ne_zero' {N : ℕ} (x : Idx N → ℝ) (hne : ∃ k, k ≠ e0 N ∧ x k ≠ 0) (s : ℂ)
+    (hs : ∀ j : Idx N, ((lab j : ℝ) : ℂ) - s ≠ 0) :
+    (fun i => ((lab i : ℝ) : ℂ) * x i / (((lab i : ℝ) : ℂ) - s)) ≠ 0 := by
+  intro hv
+  obtain ⟨k, hk, hxk⟩ := hne
+  have h := congrFun hv k
+  simp only [Pi.zero_apply] at h
+  have hlk : ((lab k : ℝ) : ℂ) ≠ 0 := by
+    intro h0
+    apply hk
+    exact (lab_eq_zero_iff k).mp (by exact_mod_cast h0)
+  rcases div_eq_zero_iff.mp h with h1 | h1
+  · exact hxk (by exact_mod_cast (mul_eq_zero.mp h1).resolve_left hlk)
+  · exact hs k h1
+
 open Classical in
 /-- Theorem 5(a) (index law, even sector). For a simple eigenvalue `λ` with even
 eigenvector `ξ ∉ ℝ e₀` whose `P_ξ` has simple zeros outside `I`:
@@ -2259,6 +2389,128 @@ theorem index_even {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → �
     (heven : ∀ i, ξ (Fin.rev i) = ξ i)
     (hsep : (P ξ).Separable) (hout : ∀ j : Idx N, (P ξ).eval (lab j : ℝ) ≠ 0) :
     Nc ξ + d b ξ = (univ.filter (fun i => hQ.eigenvalues i < lam)).card := by
-  sorry
+  -- ξ spans the kernel of Q - λ (simple eigenvalue); Lemma 5.4 gives ⟨η, ξ⟩ ≠ 0
+  have hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ ξ = 0 := by
+    rw [Matrix.sub_mulVec, smul_one_mulVec, hvec, sub_self]
+  have hξ0 : ξ ≠ 0 := by
+    obtain ⟨k, _, hk⟩ := hne
+    intro h
+    exact hk (by simp [h])
+  have hker := simple_ker Q lam ξ hvec hξ0 hsimple
+  have hnd := nondeg_even hC lam ξ hξ hker heven hne
+  have hηx : ∑ k, ξ k ≠ 0 := hnd.2
+  have hc1 : ∑ k, (1 : ℝ) * ξ k ≠ 0 := by simpa using hηx
+  have hB : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))ᵀ
+      = Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ) := by
+    rw [Matrix.transpose_sub, Matrix.transpose_smul, Matrix.transpose_one,
+      (isSymm_of_isCvS hC).eq]
+  have hφ : (fun k => (1 : ℝ) + 0 * b k) = fun _ => (1 : ℝ) := funext fun k => by ring
+  have hBT : ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) * Dprime (fun _ => (1 : ℝ)) ξ)ᵀ
+      = (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) * Dprime (fun _ => (1 : ℝ)) ξ := by
+    have h := (Qlam_Dprime_isSymm hC lam ξ hξ 1 0 (by simpa using hηx)).eq
+    rwa [hφ] at h
+  -- roots of P_ξ
+  have hp0 : P ξ ≠ 0 := hsep.ne_zero
+  have hm : (P ξ).map (algebraMap ℝ ℂ) ≠ 0 := Polynomial.map_ne_zero hp0
+  have hl0 : (lab (e0 N) : ℝ) = 0 := by
+    rw [show lab (e0 N) = 0 from (lab_eq_zero_iff _).mpr rfl]
+    simp
+  have hsplit := card_roots_split hsep
+  have hdeg := natDegree_P_lock ξ hηx
+  have hNc := Nc_eq ξ hsep
+  set R := (P ξ).roots.toFinset with hR
+  set K := ((P ξ).map (algebraMap ℝ ℂ)).roots.toFinset.filter (fun z => 0 < z.im) with hK
+  have hrootR : ∀ s ∈ R, (P ξ).eval s = 0 := fun s hs => by
+    rw [hR, Multiset.mem_toFinset, Polynomial.mem_roots hp0, Polynomial.IsRoot.def] at hs
+    exact hs
+  have hslR : ∀ s ∈ R, ∀ j : Idx N, (lab j : ℝ) - s ≠ 0 := by
+    intro s hs j h
+    apply hout j
+    rw [sub_eq_zero.mp h]
+    exact hrootR s hs
+  have h0R : (0 : ℝ) ∉ R := by
+    intro h
+    apply hout (e0 N)
+    rw [hl0]
+    exact hrootR 0 h
+  have hrootK : ∀ w ∈ K, ((P ξ).map (algebraMap ℝ ℂ)).eval w = 0 := fun w hw => by
+    rw [hK, Finset.mem_filter, Multiset.mem_toFinset, Polynomial.mem_roots hm,
+      Polynomial.IsRoot.def] at hw
+    exact hw.1
+  have hposK : ∀ w ∈ K, 0 < w.im := fun w hw => by
+    rw [hK, Finset.mem_filter] at hw
+    exact hw.2
+  have hslK : ∀ w ∈ K, ∀ j : Idx N, ((lab j : ℝ) : ℂ) - w ≠ 0 := by
+    intro w hw j h
+    have him := congrArg Complex.im h
+    rw [Complex.sub_im, Complex.ofReal_im, Complex.zero_im] at him
+    linarith [hposK w hw]
+  -- the eigen-family of T = D'_η
+  set T := Dprime (fun _ => (1 : ℝ)) ξ with hT
+  let r : Option R → ℝ := fun i => i.elim 0 (fun s => (s : ℝ))
+  let v : Option R → Idx N → ℝ :=
+    fun i => i.elim ξ (fun s => fun j => (lab j : ℝ) * ξ j / ((lab j : ℝ) - (s : ℝ)))
+  let ζ : K → ℂ := fun k => (k : ℂ)
+  let z : K → Idx N → ℂ :=
+    fun k => fun j => ((lab j : ℝ) : ℂ) * ξ j / (((lab j : ℝ) : ℂ) - (k : ℂ))
+  have hv : ∀ i, T *ᵥ v i = r i • v i := by
+    rintro (_ | ⟨s, hs⟩)
+    · show T *ᵥ ξ = (0 : ℝ) • ξ
+      rw [zero_smul]
+      exact Dprime_lock_kernel ξ hc1
+    · exact Dprime_eigvec_r ξ hηx s (hslR s hs) (F_zero_of_root ξ s (hslR s hs) (hrootR s hs))
+  have hv0 : ∀ i, v i ≠ 0 := by
+    rintro (_ | ⟨s, hs⟩)
+    · exact hξ0
+    · exact vr_ne_zero' ξ hne s (hslR s hs)
+  have hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k := by
+    rintro ⟨w, hw⟩
+    exact Dprime_eigvec_c ξ hηx w (hslK w hw) (F_zero_of_root_c ξ w (hslK w hw) (hrootK w hw))
+  have hz0 : ∀ k, z k ≠ 0 := by
+    rintro ⟨w, hw⟩
+    exact vc_ne_zero' ξ hne w (hslK w hw)
+  have hr : Function.Injective r := by
+    rintro (_ | ⟨s, hs⟩) (_ | ⟨t, ht⟩) h
+    · rfl
+    · have h' : (0 : ℝ) = t := h
+      exact (h0R (by rw [h']; exact ht)).elim
+    · have h' : s = (0 : ℝ) := h
+      exact (h0R (by rw [← h']; exact hs)).elim
+    · have h' : s = t := h
+      subst h'
+      rfl
+  have hinj := inj_sum_elim r hr ζ Subtype.val_injective (fun k => hposK k k.2)
+  have hcard : Fintype.card (Option R) + 2 * Fintype.card K = Fintype.card (Idx N) := by
+    rw [Fintype.card_option, Fintype.card_coe, Fintype.card_coe, Fintype.card_fin]
+    omega
+  obtain ⟨q, hq⟩ := exists_qform (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))
+  have hpb := pontryagin_balance_ker hB hBT r v hv hv0 none (fun y hy => hker y hy)
+    ζ z hz hz0 hinj hcard q hq
+  have hk := kappa_eq_sigNeg Q hQ lam q hq
+  -- negative norms: ξ is null (kernel), v_s is negative iff the defect condition holds
+  have hcount : (univ.filter (fun i =>
+        v i ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ v i) < 0)).card = d b ξ := by
+    rw [Finset.card_filter, Fintype.sum_option]
+    have hnone : (if v none ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ v none) < 0
+        then 1 else 0) = 0 := by
+      show (if ξ ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ ξ) < 0 then 1 else 0) = 0
+      rw [hξ, dotProduct_zero, if_neg (lt_irrefl 0)]
+    rw [hnone, zero_add]
+    unfold d
+    rw [Finset.card_filter, ← Finset.sum_coe_sort R]
+    refine Finset.sum_congr rfl fun s _ => ?_
+    obtain ⟨s, hs⟩ := s
+    have hiff : (v (some ⟨s, hs⟩) ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))
+          *ᵥ v (some ⟨s, hs⟩)) < 0)
+        ↔ (s ≠ 0 ∧ 0 < (derivative (P ξ)).eval s * (P (fun k => b k * ξ k)).eval s) := by
+      rw [show v (some ⟨s, hs⟩) = (fun j => (lab j : ℝ) * ξ j / ((lab j : ℝ) - s)) from rfl,
+        eig_sign hC lam ξ hξ s (hslR s hs) (hrootR s hs)]
+      exact ⟨fun h => ⟨fun h0 => h0R (by rw [← h0]; exact hs), h⟩, fun h => h.2⟩
+    by_cases h1 : v (some ⟨s, hs⟩) ⬝ᵥ ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))
+        *ᵥ v (some ⟨s, hs⟩)) < 0
+    · rw [if_pos h1, if_pos (hiff.mp h1)]
+    · rw [if_neg h1, if_neg (fun h => h1 (hiff.mpr h))]
+  rw [← hk, hpb, hcount, Fintype.card_coe, ← hNc]
+  omega
 
 end CvS
