@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.14 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.23 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly TWENTY-SEVEN errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly FIFTY-FOUR errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -285,3 +285,232 @@ example (g₁ g₂ : ℝ) (z : ℂ) :
     ((g₁ : ℂ) - Complex.I * g₂) * z + ((g₁ : ℂ) + Complex.I * g₂) * star z
       = (((g₁ * z.re + g₂ * z.im) : ℝ) : ℂ) :=
   CvS.re_im_combo g₁ g₂ z
+
+-- CORRUPTED input (null 1): determinant hypothesis dropped. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (y : n → ℝ)
+    (hy : ∀ b, y ⬝ᵥ (B *ᵥ W b) = 0) : y = 0 :=
+  CvS.null_vec_zero B hW W hW y hy
+
+-- CORRUPTED input (null 2): conclusion inverted (y ≠ 0). This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (hBdet : B.det ≠ 0) (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (y : n → ℝ)
+    (hy : ∀ b, y ⬝ᵥ (B *ᵥ W b) = 0) : y ≠ 0 :=
+  CvS.null_vec_zero B hBdet W hW y hy
+
+-- CORRUPTED input (null 3): orthogonality to all members replaced by orthogonality to one. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (hBdet : B.det ≠ 0) (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (a : n)
+    (ha : W a ⬝ᵥ (B *ᵥ W a) = 0) : False :=
+  CvS.not_null_member B hBdet W hW a ha
+
+-- CORRUPTED input (balance 4): the |κ| contribution of the non-real pairs omitted. This must FAIL.
+open Matrix in
+example {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    {B T : Matrix n n ℝ} (hB : Bᵀ = B) (hBdet : B.det ≠ 0) (hBT : (B * T)ᵀ = B * T)
+    (r : ι → ℝ) (v : ι → n → ℝ) (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k)))))
+    (hcard : Fintype.card ι + 2 * Fintype.card κ = Fintype.card n)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card :=
+  CvS.pontryagin_balance hB hBdet hBT r v hv hv0 ζ z hz hz0 hinj hcard q hq
+
+-- CORRUPTED input (balance 5): wrong dimension count (pairs counted once). This must FAIL.
+open Matrix in
+example {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    {B T : Matrix n n ℝ} (hB : Bᵀ = B) (hBdet : B.det ≠ 0) (hBT : (B * T)ᵀ = B * T)
+    (r : ι → ℝ) (v : ι → n → ℝ) (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k)))))
+    (hcard : Fintype.card ι + Fintype.card κ = Fintype.card n)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card + Fintype.card κ :=
+  CvS.pontryagin_balance hB hBdet hBT r v hv hv0 ζ z hz hz0 hinj hcard q hq
+
+-- CORRUPTED input (balance 6): real eigenvectors counted by POSITIVE norm. This must FAIL.
+open Matrix in
+example {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    {B T : Matrix n n ℝ} (hB : Bᵀ = B) (hBdet : B.det ≠ 0) (hBT : (B * T)ᵀ = B * T)
+    (r : ι → ℝ) (v : ι → n → ℝ) (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k)))))
+    (hcard : Fintype.card ι + 2 * Fintype.card κ = Fintype.card n)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => 0 < v i ⬝ᵥ (B *ᵥ v i))).card + Fintype.card κ :=
+  CvS.pontryagin_balance hB hBdet hBT r v hv hv0 ζ z hz hz0 hinj hcard q hq
+
+-- CORRUPTED input (lock 1): eigenvalue shifted by one. This must FAIL.
+open Matrix in
+example {N : ℕ} (x : CvS.Idx N → ℝ) (hc : ∑ k, x k ≠ 0) (s : ℝ)
+    (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hF : ∑ k, x k / ((CvS.lab k : ℝ) - s) = 0) :
+    CvS.Dprime (fun _ => (1 : ℝ)) x *ᵥ (fun i => (CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
+      = (s + 1) • (fun i => (CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s)) :=
+  CvS.Dprime_eigvec_r x hc s hs hF
+
+-- CORRUPTED input (lock 2): eigenvector without the label factor. This must FAIL.
+open Matrix in
+example {N : ℕ} (x : CvS.Idx N → ℝ) (hc : ∑ k, x k ≠ 0) (s : ℝ)
+    (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hF : ∑ k, x k / ((CvS.lab k : ℝ) - s) = 0) :
+    CvS.Dprime (fun _ => (1 : ℝ)) x *ᵥ (fun i => x i / ((CvS.lab i : ℝ) - s))
+      = s • (fun i => x i / ((CvS.lab i : ℝ) - s)) :=
+  CvS.Dprime_eigvec_r x hc s hs hF
+
+-- CORRUPTED input (lock 3): wrong resolvent sign in F. This must FAIL.
+open Matrix in
+example {N : ℕ} (x : CvS.Idx N → ℝ) (s : ℝ)
+    (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hroot : (CvS.P x).eval s = 0) :
+    ∑ k, x k / ((CvS.lab k : ℝ) + s) = 0 :=
+  CvS.F_zero_of_root x s hs hroot
+
+-- CORRUPTED input (norm 1): lock norm with the sign flipped. This must FAIL.
+open Matrix in
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
+    (hx : (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x = Pi.single (CvS.e0 N) 1)
+    (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
+    ∑ i, ∑ j, ((CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
+        * (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
+        * ((CvS.lab j : ℝ) * x j / ((CvS.lab j : ℝ) - s))
+      = -(s ^ 2 * ((∑ k, x k / ((CvS.lab k : ℝ) - s))
+            * (∑ k, b k * x k / ((CvS.lab k : ℝ) - s) ^ 2)
+          - (∑ k, x k / ((CvS.lab k : ℝ) - s) ^ 2)
+            * (∑ k, b k * (x k / ((CvS.lab k : ℝ) - s))))) :=
+  CvS.lock_norm hC μ x hx s hs
+
+-- CORRUPTED input (norm 2): lock norm without the s² factor. This must FAIL.
+open Matrix in
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
+    (hx : (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x = Pi.single (CvS.e0 N) 1)
+    (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
+    ∑ i, ∑ j, ((CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
+        * (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
+        * ((CvS.lab j : ℝ) * x j / ((CvS.lab j : ℝ) - s))
+      = (∑ k, x k / ((CvS.lab k : ℝ) - s)) * (∑ k, b k * x k / ((CvS.lab k : ℝ) - s) ^ 2)
+          - (∑ k, x k / ((CvS.lab k : ℝ) - s) ^ 2) * (∑ k, b k * (x k / ((CvS.lab k : ℝ) - s))) :=
+  CvS.lock_norm hC μ x hx s hs
+
+-- CORRUPTED input (norm 3): Q_μ(x, x) claimed equal to the wrong coordinate. This must FAIL.
+open Matrix in
+example {N : ℕ} (A : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (x : CvS.Idx N → ℝ)
+    (hx : A *ᵥ x = Pi.single (CvS.e0 N) 1) (i : CvS.Idx N) : x ⬝ᵥ (A *ᵥ x) = x i :=
+  CvS.lock_norm_x A x hx
+
+-- CORRUPTED input (sign 1): sign condition reversed (negative norm ↔ P'·P_β < 0). This must FAIL.
+open Matrix in
+example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
+    (hC : CvS.IsCvS Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
+    (hx : (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x = Pi.single (CvS.e0 N) 1)
+    (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hroot : (CvS.P x).eval s = 0) :
+    (∑ i, ∑ j, ((CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
+        * (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
+        * ((CvS.lab j : ℝ) * x j / ((CvS.lab j : ℝ) - s)) < 0)
+      ↔ (Polynomial.derivative (CvS.P x)).eval s * (CvS.P (fun k => b k * x k)).eval s < 0 :=
+  CvS.lock_sign hC μ x hx s hs hroot
+
+-- CORRUPTED input (sign 2): derivative formula without the F·S term. This must FAIL.
+open Matrix in
+example {N : ℕ} (x : CvS.Idx N → ℝ) (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
+    (Polynomial.derivative (CvS.P x)).eval s
+      = (∏ j : CvS.Idx N, ((CvS.lab j : ℝ) - s)) * ∑ k, x k / ((CvS.lab k : ℝ) - s) ^ 2 :=
+  CvS.P_deriv_eval x s hs
+
+-- CORRUPTED input (sign 3): P_w(s) with the product omitted. This must FAIL.
+open Matrix in
+example {N : ℕ} (w : CvS.Idx N → ℝ) (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
+    (CvS.P w).eval s = ∑ k, w k / ((CvS.lab k : ℝ) - s) :=
+  CvS.P_eval_div w s hs
+
+-- CORRUPTED input (deg 1): degree claimed 2N + 1. This must FAIL.
+example {N : ℕ} (x : CvS.Idx N → ℝ) (hc : ∑ k, x k ≠ 0) :
+    (CvS.P x).natDegree = 2 * N + 1 :=
+  CvS.natDegree_P_lock x hc
+
+-- CORRUPTED input (deg 2): characteristic polynomial without the factor X. This must FAIL.
+example {N : ℕ} (x : CvS.Idx N → ℝ) (hc : ∑ k, x k ≠ 0) :
+    (CvS.Dprime (fun _ => (1 : ℝ)) x).charpoly = Polynomial.C (1 / ∑ k, x k) * CvS.P x :=
+  CvS.charpoly_lock x hc
+
+-- CORRUPTED input (deg 3): complex root count claimed 2N + 1. This must FAIL.
+example {N : ℕ} (x : CvS.Idx N → ℝ) (hc : ∑ k, x k ≠ 0) :
+    ((CvS.P x).map (algebraMap ℝ ℂ)).roots.card = 2 * N + 1 :=
+  CvS.card_roots_lock x hc
+
+-- CORRUPTED input (roots 1): the non-real roots counted once instead of twice. This must FAIL.
+example {p : Polynomial ℝ} (hp : p.Separable) :
+    p.roots.toFinset.card
+        + ((p.map (algebraMap ℝ ℂ)).roots.toFinset.filter (fun z => 0 < z.im)).card
+      = p.natDegree :=
+  CvS.card_roots_split hp
+
+-- CORRUPTED input (roots 2): p(z̄) = p(z) (conjugation dropped). This must FAIL.
+example (p : Polynomial ℝ) (z : ℂ) :
+    (p.map (algebraMap ℝ ℂ)).eval (starRingEnd ℂ z) = (p.map (algebraMap ℝ ℂ)).eval z :=
+  CvS.eval_map_conj p z
+
+-- CORRUPTED input (roots 3): -z claimed to be a root instead of z̄. This must FAIL.
+example {p : Polynomial ℝ} (hp : p ≠ 0) {z : ℂ} (hz : z ∈ (p.map (algebraMap ℝ ℂ)).roots) :
+    -z ∈ (p.map (algebraMap ℝ ℂ)).roots :=
+  CvS.mem_roots_conj hp hz
+
+-- CORRUPTED input (family 1): conjugates dropped (ζ listed twice) yet injectivity claimed. This must FAIL.
+example {ι κ : Type*} (r : ι → ℝ) (hr : Function.Injective r) (ζ : κ → ℂ)
+    (hζ : Function.Injective ζ) (hpos : ∀ k, 0 < (ζ k).im) :
+    Function.Injective (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ ζ)) :=
+  CvS.inj_sum_elim r hr ζ hζ hpos
+
+-- CORRUPTED input (family 2): v_s claimed to vanish. This must FAIL.
+example {N : ℕ} (x : CvS.Idx N → ℝ) (hx0 : x (CvS.e0 N) ≠ 0) (s : ℝ)
+    (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0)
+    (hF : ∑ k, x k / ((CvS.lab k : ℝ) - s) = 0) :
+    (fun i => (CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s)) = 0 :=
+  CvS.vr_ne_zero x hx0 s hs hF
+
+-- CORRUPTED input (family 3): N_c claimed to count every non-real root (no pairing). This must FAIL.
+example {N : ℕ} (ξ : CvS.Idx N → ℝ) (hsep : (CvS.P ξ).Separable) :
+    CvS.Nc ξ
+      = 2 * (((CvS.P ξ).map (algebraMap ℝ ℂ)).roots.toFinset.filter (fun z => 0 < z.im)).card :=
+  CvS.Nc_eq ξ hsep
+
+-- CORRUPTED input (theorem6 1): lock with the sign indicator reversed ([x₀ > 0]). This must FAIL.
+open Classical in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → ℝ)
+    (hC : CvS.IsCvS Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
+    (hμ : IsUnit (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).det)
+    (x : CvS.Idx N → ℝ)
+    (hx : x = Matrix.mulVec (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ))⁻¹
+      (Pi.single (CvS.e0 N) 1))
+    (hx0 : x (CvS.e0 N) ≠ 0) (hηx : ∑ k, x k ≠ 0)
+    (hsep : (CvS.P x).Separable) (hout : ∀ j : CvS.Idx N, (CvS.P x).eval (CvS.lab j : ℝ) ≠ 0) :
+    CvS.Nc x + CvS.d b x + (if 0 < x (CvS.e0 N) then 1 else 0)
+      = (Finset.univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
+  CvS.lock Q a b hC hQ μ hμ x hx hx0 hηx hsep hout
+
+-- CORRUPTED input (theorem6 2): lock without the complex pairs N_c. This must FAIL.
+open Classical in
+example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → ℝ)
+    (hC : CvS.IsCvS Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
+    (hμ : IsUnit (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).det)
+    (x : CvS.Idx N → ℝ)
+    (hx : x = Matrix.mulVec (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ))⁻¹
+      (Pi.single (CvS.e0 N) 1))
+    (hx0 : x (CvS.e0 N) ≠ 0) (hηx : ∑ k, x k ≠ 0)
+    (hsep : (CvS.P x).Separable) (hout : ∀ j : CvS.Idx N, (CvS.P x).eval (CvS.lab j : ℝ) ≠ 0) :
+    CvS.d b x + (if x (CvS.e0 N) < 0 then 1 else 0)
+      = (Finset.univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
+  CvS.lock Q a b hC hQ μ hμ x hx hx0 hηx hsep hout
+
+-- CORRUPTED input (theorem6 3): q(w) = w ⬝ w (matrix dropped) claimed from exists_qform. This must FAIL.
+example {n : Type*} [Fintype n] [DecidableEq n] (A : Matrix n n ℝ) :
+    ∃ q : QuadraticForm ℝ (n → ℝ), ∀ w, q w = w ⬝ᵥ w :=
+  CvS.exists_qform A

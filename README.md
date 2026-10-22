@@ -35,19 +35,28 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth` | Lemma 5.6 step 4b: $`B(u,u)+B(w,w)=0`$; real eigenvectors are $`B`$-orthogonal to $`u,w`$ | **proved** |
 | `CvS.pair_orth`, `CvS.plane_split` | Lemma 5.6 step 4c: different pairs are $`B`$-orthogonal; each pair's plane splits into one positive and one negative direction | **proved** |
 | `CvS.re_im_combo`, `CvS.real_family_indep` | Lemma 5.6 step 4d: the real family $`\{v_i,\ \mathrm{Re}\,z_k,\ \mathrm{Im}\,z_k\}`$ is linearly independent | **proved** |
+| `CvS.null_vec_zero`, `CvS.not_null_member` | Lemma 5.6 step 4d: no member of a complete independent family is $`B`$-null to all members | **proved** |
+| `CvS.pontryagin_balance` | **Lemma 5.6 (Pontryagin balance)**: $`\kappa = \#\{\text{real eigenvectors of negative norm}\} + \#\{\text{non-real pairs}\}`$ | **proved** |
+| `CvS.Qmu_Dprime_lock_isSymm`, `CvS.F_zero_of_root`, `CvS.Dprime_eigvec_r`, `CvS.Dprime_eigvec_c` | Theorem 6 steps: lock symmetry; explicit eigenvectors $`v_s=\mathrm{lab}\,x/(\mathrm{lab}-s)`$ | **proved** |
+| `CvS.lock_norm_x`, `CvS.lock_norm` | Theorem 6 step: $`Q_\mu(x,x)=x_0`$, $`Q_\mu(v_s,v_s)=s^2(FG_2-F_2G)`$ | **proved** |
+| `CvS.P_deriv_eval`, `CvS.lock_sign` | Theorem 6 step: $`Q_\mu(v_s,v_s)<0 \iff P_x'(s)\,P_{\beta\odot x}(s)>0`$ | **proved** |
+| `CvS.charpoly_lock`, `CvS.natDegree_P_lock`, `CvS.card_roots_lock` | Theorem 6 step: $`\chi_{D'_\eta}=c^{-1}X\,P_x`$, $`\deg P_x=2N`$ | **proved** |
+| `CvS.card_roots_split` | Theorem 6 step: $`\#\{\text{real roots}\}+2\,\#\{\operatorname{Im}>0\}=\deg p`$ (separable real $`p`$) | **proved** |
+| `CvS.F_zero_of_root_c`, `CvS.vr_ne_zero`, `CvS.vc_ne_zero`, `CvS.inj_sum_elim`, `CvS.Nc_eq` | Theorem 6 step: eigenvectors nonzero, eigenvalues distinct, $`N_c=\#\{\operatorname{Im}>0\}`$ | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
-| `CvS.lock` | Theorem 6, resolvent lock | to be completed |
+| `CvS.exists_qform` | every real square matrix gives the quadratic form $`w^{\top}Aw`$ | **proved** |
+| `CvS.lock` | **Theorem 6, resolvent lock**: $`N_c(P_x)+d(x)+[x_0<0]=\kappa(\mu)`$ | **proved** |
 
 Contributions are welcome: open an issue or a pull request. A natural reusable by-product is Hermite's theorem (signature of the Bezoutian counts real roots), which would also be a Mathlib contribution.
 
 ## Build
 
-The statements compile against Mathlib (Lean v4.36.0-rc1).
+The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 6 (`CvS.lock`) is fully proved; Theorem 5(a) (`CvS.index_even`) is the remaining statement.
 
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly twenty-seven errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly fifty-four errors expected
 ```
 
 ## License
@@ -56,6 +65,6 @@ Apache 2.0, the Mathlib license.
 
 ---
 
-**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İfadeler derlenir; ispatların biçimselleştirilmesi sürmektedir ve katkıya açıktır.
+**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. Rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; indeks yasasının (Teorem 5(a)) biçimselleştirilmesi sürmektedir ve katkıya açıktır.
 
 _Lean statements and proofs drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._
