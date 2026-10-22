@@ -1,5 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.25 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.26 -- negative control (not part of the library build).
+  v1.26: hypotheses read IsLoewner (no parity); the Lemma 4 and Theorem 5(a) blocks carry
+  `b` odd as an explicit hypothesis, so every block passes or fails for the same reason as in v1.25.
   Run:  lake env lean kontrol/NegatifKontrol.lean
   Expected: exactly SIXTY errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
@@ -13,21 +15,21 @@ example : CvS.lab (0 : CvS.Idx 1) = 0 := by decide
 
 -- CORRECT input: the library proof of symmetry is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) : Q.IsSymm := CvS.isSymm_of_isCvS hC
+    (hC : CvS.IsLoewner Q a b) : Q.IsSymm := CvS.isSymm_of_isCvS hC
 
 -- CORRUPTED proof: drops the sign-flip step. This must FAIL (unsolved goals).
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (i j : CvS.Idx N) (h : i ≠ j) : Q j i = Q i j := by
+    (hC : CvS.IsLoewner Q a b) (i j : CvS.Idx N) (h : i ≠ j) : Q j i = Q i j := by
   rw [hC.off j i (Ne.symm h), hC.off i j h]
 
 -- CORRECT input: the commutator identity is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge b (fun _ => 1) :=
+    (hC : CvS.IsLoewner Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge b (fun _ => 1) :=
   CvS.commutator hC
 
 -- CORRUPTED input: wedge with the factors swapped (wrong sign). This must FAIL.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge (fun _ => 1) b :=
+    (hC : CvS.IsLoewner Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge (fun _ => 1) b :=
   CvS.commutator hC
 
 -- CORRECT input: Lemma 2(b) is accepted.
@@ -44,7 +46,7 @@ example {N : ℕ} (φ ξ : CvS.Idx N → ℝ) (hc : ∑ k, φ k * ξ k ≠ 0) (s
 
 -- CORRECT input: Lemma 3 for φ = x η + y β is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0) (x y : ℝ)
     (hc : ∑ k, (x + y * b k) * ξ k ≠ 0) :
     ((Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ))
@@ -54,7 +56,7 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
 -- CORRUPTED input: Lemma 3 claimed for an arbitrary φ outside span{η, β}.
 -- Numerically the asymmetry is 0.06–21 there. This must FAIL.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ φ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (lam : ℝ) (ξ φ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0) (x y : ℝ)
     (hc : ∑ k, (x + y * b k) * ξ k ≠ 0) :
     ((Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) * CvS.Dprime φ ξ).IsSymm :=
@@ -62,28 +64,28 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
 
 -- CORRECT input: Lemma 4 for an even eigenvector is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (hb : ∀ i, b (Fin.rev i) = - b i) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
     (hsimple : ∀ w : CvS.Idx N → ℝ,
       (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec w = 0 → ∃ t : ℝ, w = t • ξ)
     (heven : ∀ i, ξ (Fin.rev i) = ξ i) (hne : ∃ k, k ≠ CvS.e0 N ∧ ξ k ≠ 0) :
     ∑ k, ξ k ≠ 0 :=
-  (CvS.nondeg_even hC lam ξ hξ hsimple heven hne).2
+  (CvS.nondeg_even hC hb lam ξ hξ hsimple heven hne).2
 
 -- CORRUPTED input: the same conclusion for an ODD eigenvector.
 -- Numerically <eta, xi> = 0 there (max 2.6e-14). This must FAIL.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (hb : ∀ i, b (Fin.rev i) = - b i) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
     (hsimple : ∀ w : CvS.Idx N → ℝ,
       (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec w = 0 → ∃ t : ℝ, w = t • ξ)
     (hodd : ∀ i, ξ (Fin.rev i) = - ξ i) (hne : ∃ k, k ≠ CvS.e0 N ∧ ξ k ≠ 0) :
     ∑ k, ξ k ≠ 0 :=
-  (CvS.nondeg_even hC lam ξ hξ hsimple hodd hne).2
+  (CvS.nondeg_even hC hb lam ξ hξ hsimple hodd hne).2
 
 -- CORRECT input: Lemma 6, Q_λ(w,w) = F G' - F' G, is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
     (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
     ∑ i, ∑ j, ξ i / ((CvS.lab i : ℝ) - s) * (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
@@ -95,7 +97,7 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
 -- CORRUPTED input: the sign-flipped formula F' G - F G'.
 -- Numerically it fails at all 300 test points (median deviation 1.2). This must FAIL.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
     (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
     ∑ i, ∑ j, ξ i / ((CvS.lab i : ℝ) - s) * (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) i j
@@ -375,7 +377,7 @@ example {N : ℕ} (x : CvS.Idx N → ℝ) (s : ℝ)
 -- CORRUPTED input (norm 1): lock norm with the sign flipped. This must FAIL.
 open Matrix in
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
     (hx : (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x = Pi.single (CvS.e0 N) 1)
     (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
     ∑ i, ∑ j, ((CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
@@ -390,7 +392,7 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
 -- CORRUPTED input (norm 2): lock norm without the s² factor. This must FAIL.
 open Matrix in
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
     (hx : (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x = Pi.single (CvS.e0 N) 1)
     (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) :
     ∑ i, ∑ j, ((CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
@@ -409,7 +411,7 @@ example {N : ℕ} (A : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (x : CvS.Idx N → �
 -- CORRUPTED input (sign 1): sign condition reversed (negative norm ↔ P'·P_β < 0). This must FAIL.
 open Matrix in
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (μ : ℝ) (x : CvS.Idx N → ℝ)
     (hx : (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ x = Pi.single (CvS.e0 N) 1)
     (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hroot : (CvS.P x).eval s = 0) :
     (∑ i, ∑ j, ((CvS.lab i : ℝ) * x i / ((CvS.lab i : ℝ) - s))
@@ -485,7 +487,7 @@ example {N : ℕ} (ξ : CvS.Idx N → ℝ) (hsep : (CvS.P ξ).Separable) :
 -- CORRUPTED input (theorem6 1): lock with the sign indicator reversed ([x₀ > 0]). This must FAIL.
 open Classical in
 example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → ℝ)
-    (hC : CvS.IsCvS Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
+    (hC : CvS.IsLoewner Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
     (hμ : IsUnit (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).det)
     (x : CvS.Idx N → ℝ)
     (hx : x = Matrix.mulVec (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ))⁻¹
@@ -499,7 +501,7 @@ example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → 
 -- CORRUPTED input (theorem6 2): lock without the complex pairs N_c. This must FAIL.
 open Classical in
 example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → ℝ)
-    (hC : CvS.IsCvS Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
+    (hC : CvS.IsLoewner Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
     (hμ : IsUnit (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).det)
     (x : CvS.Idx N → ℝ)
     (hx : x = Matrix.mulVec (Q - μ • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ))⁻¹
@@ -549,13 +551,13 @@ example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
 -- CORRUPTED input (theorem5a 1): index law without the complex pairs. This must FAIL.
 open Classical in
 example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → ℝ)
-    (hC : CvS.IsCvS Q a b) (hQ : Q.IsHermitian) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (hb : ∀ i, b (Fin.rev i) = - b i) (hQ : Q.IsHermitian) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hvec : Q.mulVec ξ = lam • ξ) (hne : ∃ k, k ≠ CvS.e0 N ∧ ξ k ≠ 0)
     (hsimple : Module.finrank ℝ (Module.End.eigenspace (Matrix.toLin' Q) lam) = 1)
     (heven : ∀ i, ξ (Fin.rev i) = ξ i)
     (hsep : (CvS.P ξ).Separable) (hout : ∀ j : CvS.Idx N, (CvS.P ξ).eval (CvS.lab j : ℝ) ≠ 0) :
     CvS.d b ξ = (Finset.univ.filter (fun i => hQ.eigenvalues i < lam)).card :=
-  CvS.index_even Q a b hC hQ lam ξ hvec hne hsimple heven hsep hout
+  CvS.index_even Q a b hC hb hQ lam ξ hvec hne hsimple heven hsep hout
 
 -- CORRUPTED input (theorem5a 2): the kernel claimed to be {ξ} itself (t = 1). This must FAIL.
 open Matrix in
@@ -568,7 +570,7 @@ example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (lam : ℝ) (ξ : CvS
 -- CORRUPTED input (theorem5a 3): sign condition reversed in the eigen case. This must FAIL.
 open Matrix in
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
-    (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
+    (hC : CvS.IsLoewner Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) *ᵥ ξ = 0)
     (s : ℝ) (hs : ∀ j : CvS.Idx N, (CvS.lab j : ℝ) - s ≠ 0) (hroot : (CvS.P ξ).eval s = 0) :
     ((fun i => (CvS.lab i : ℝ) * ξ i / ((CvS.lab i : ℝ) - s))

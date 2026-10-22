@@ -16,7 +16,8 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 
 ## Main declarations
 
-* `CvS.IsCvS`: matrices of Connes--van Suijlekom type.
+* `CvS.IsLoewner`: Loewner-type matrices `q_ij = (b_i - b_j)/(i - j)`, no parity condition.
+* `CvS.IsCvS`: matrices of Connes--van Suijlekom type (`a` even, `b` odd); `IsCvS.toLoewner`.
 * `CvS.P`: the polynomial `P_ξ(s) = ∑_k ξ_k ∏_{j ≠ k} (j - s)`.
 * `CvS.commutator`: CvS Lemma 5.1, `[D, Q] = β ∧ η` (also for `Q - μ`).
 * `CvS.Dprime`, `CvS.det_Dprime`: Lemma 2, the rank-one determinant.
@@ -63,6 +64,12 @@ def lab {N : ℕ} (i : Idx N) : ℤ := (i.val : ℤ) - (N : ℤ)
 /-- The index with label `0`. -/
 def e0 (N : ℕ) : Idx N := ⟨N, by omega⟩
 
+/-- Loewner type: `q_ii = a_i`, `q_ij = (b_i - b_j)/(i - j)`, with no parity condition.
+Theorem 6 (`lock`) holds for every matrix of this type. -/
+structure IsLoewner {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ) : Prop where
+  diag : ∀ i, Q i i = a i
+  off  : ∀ i j, i ≠ j → Q i j = (b i - b j) / ((lab i : ℝ) - (lab j : ℝ))
+
 /-- CvS type (Connes--van Suijlekom, eq. (11)):
 `q_ii = a_i`, `q_ij = (b_i - b_j)/(i - j)`, `a` even, `b` odd. -/
 structure IsCvS {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ) : Prop where
@@ -70,6 +77,10 @@ structure IsCvS {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ)
   off    : ∀ i j, i ≠ j → Q i j = (b i - b j) / ((lab i : ℝ) - (lab j : ℝ))
   a_even : ∀ i, a (Fin.rev i) = a i
   b_odd  : ∀ i, b (Fin.rev i) = - b i
+
+/-- Every CvS matrix is of Loewner type. -/
+theorem IsCvS.toLoewner {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
+    (hC : IsCvS Q a b) : IsLoewner Q a b := ⟨hC.diag, hC.off⟩
 
 /-- `P_ξ(s) = ∑_k ξ_k ∏_{j ≠ k} (j - s)`. -/
 def P {N : ℕ} (ξ : Idx N → ℝ) : ℝ[X] :=
@@ -88,7 +99,7 @@ def d {N : ℕ} (b ξ : Idx N → ℝ) : ℕ :=
 
 /-- A CvS matrix is symmetric. -/
 theorem isSymm_of_isCvS {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) : Q.IsSymm := by
+    (hC : IsLoewner Q a b) : Q.IsSymm := by
   refine Matrix.IsSymm.ext fun i j => ?_
   by_cases h : i = j
   · subst h
@@ -113,7 +124,7 @@ def wedge {N : ℕ} (u v : Idx N → ℝ) : Matrix (Idx N) (Idx N) ℝ :=
 
 /-- CvS Lemma 5.1: `[D, Q] = β ∧ η`, with `β = (b_j)` and `η = (1, …, 1)`. -/
 theorem commutator {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) : D N * Q - Q * D N = wedge b (fun _ => 1) := by
+    (hC : IsLoewner Q a b) : D N * Q - Q * D N = wedge b (fun _ => 1) := by
   ext i j
   simp only [D, wedge, Matrix.sub_apply, Matrix.diagonal_mul, Matrix.mul_diagonal,
     Matrix.of_apply, mul_one, one_mul]
@@ -129,7 +140,7 @@ theorem commutator {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → �
 
 /-- The same identity for the shifted matrix `Q - μ`. -/
 theorem commutator_shift {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (μ : ℝ) :
+    (hC : IsLoewner Q a b) (μ : ℝ) :
     D N * (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) - (Q - μ • 1) * D N
       = wedge b (fun _ => 1) := by
   rw [mul_sub, sub_mul, Matrix.mul_smul, Matrix.smul_mul, mul_one, one_mul,
@@ -266,7 +277,7 @@ theorem det_Dprime {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k * ξ k �
 /-- Lemma 3 (Q_λ-symmetry criterion). If `Q_λ ξ = 0` and `φ = x η + y β` with
 `c = ⟨φ, ξ⟩ ≠ 0`, then `Q_λ D'_φ` is symmetric. -/
 theorem Qlam_Dprime_isSymm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0) (x y : ℝ)
     (hc : ∑ k, (x + y * b k) * ξ k ≠ 0) :
     ((Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) * Dprime (fun k => x + y * b k) ξ).IsSymm := by
@@ -364,7 +375,7 @@ theorem sum_odd_mul_even_eq_zero {N : ℕ} (b ξ : Idx N → ℝ)
 
 /-- `(Q_λ D ξ)_i = ⟨β, ξ⟩ - b_i ⟨η, ξ⟩` whenever `Q_λ ξ = 0`. -/
 theorem Qlam_D_apply {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0) (i : Idx N) :
     ∑ k, (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) i k * ((lab k : ℝ) * ξ k)
       = (∑ k, b k * ξ k) - b i * ∑ k, ξ k := by
@@ -393,17 +404,17 @@ theorem Qlam_D_apply {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N →
   rw [e1, e2, h0] at h1
   linarith
 
-/-- Lemma 4 (non-degeneracy), even sector. If `λ` is simple with even eigenvector
+/-- Lemma 4 (non-degeneracy), even sector, for `b` odd. If `λ` is simple with even eigenvector
 `ξ ∉ ℝ e₀`, then `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0`. Simplicity is stated as: every vector
 in the kernel of `Q - λ` is a multiple of `ξ`. -/
 theorem nondeg_even {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (hb : ∀ i, b (Fin.rev i) = - b i) (lam : ℝ) (ξ : Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0)
     (hsimple : ∀ w : Idx N → ℝ,
       (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec w = 0 → ∃ t : ℝ, w = t • ξ)
     (heven : ∀ i, ξ (Fin.rev i) = ξ i) (hne : ∃ k, k ≠ e0 N ∧ ξ k ≠ 0) :
     ∑ k, b k * ξ k = 0 ∧ ∑ k, ξ k ≠ 0 := by
-  have hB : ∑ k, b k * ξ k = 0 := sum_odd_mul_even_eq_zero b ξ hC.b_odd heven
+  have hB : ∑ k, b k * ξ k = 0 := sum_odd_mul_even_eq_zero b ξ hb heven
   refine ⟨hB, fun hE => ?_⟩
   have hv : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec
       (fun k => (lab k : ℝ) * ξ k) = 0 := by
@@ -431,7 +442,7 @@ theorem nondeg_even {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → 
 and the derivatives written as finite sums `F' = Σ ξ_k/(k-s)²`, `G' = Σ b_k ξ_k/(k-s)²`:
 `Q_λ(w_s, w_s) = F G' - F' G`. -/
 theorem Qlam_norm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)).mulVec ξ = 0)
     (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) :
     ∑ i, ∑ j, ξ i / ((lab i : ℝ) - s) * (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) i j
@@ -1169,7 +1180,7 @@ theorem pontryagin_balance {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintyp
 /-- Theorem 6, step T6.1: in the lock setting `(Q - μ) x = e₀`, `(Q - μ) D'_η` is symmetric
 (uses `lab e₀ = 0`). -/
 theorem Qmu_Dprime_lock_isSymm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (μ : ℝ) (x : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (μ : ℝ) (x : Idx N → ℝ)
     (hx : (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ x = Pi.single (e0 N) 1)
     (hc : ∑ k, (1 : ℝ) * x k ≠ 0) :
     ((Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) * Dprime (fun _ => (1 : ℝ)) x).IsSymm := by
@@ -1329,7 +1340,7 @@ theorem lock_norm_x {N : ℕ} (A : Matrix (Idx N) (Idx N) ℝ) (x : Idx N → �
 /-- Theorem 6, step T6.3: `Q_μ(v_s, v_s) = s² (F G₂ - F₂ G)` in the lock setting
 (the `e₀`-terms cancel). -/
 theorem lock_norm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (μ : ℝ) (x : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (μ : ℝ) (x : Idx N → ℝ)
     (hx : (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ x = Pi.single (e0 N) 1)
     (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) :
     ∑ i, ∑ j, ((lab i : ℝ) * x i / ((lab i : ℝ) - s))
@@ -1504,7 +1515,7 @@ theorem P_deriv_eval {N : ℕ} (x : Idx N → ℝ) (s : ℝ) (hs : ∀ j : Idx N
 
 /-- Theorem 6, step T6.4: at a real zero of `P_x`, `Q_μ(v_s, v_s) < 0 ↔ P_x'(s) P_{β⊙x}(s) > 0`. -/
 theorem lock_sign {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (μ : ℝ) (x : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (μ : ℝ) (x : Idx N → ℝ)
     (hx : (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ x = Pi.single (e0 N) 1)
     (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) (hroot : (P x).eval s = 0) :
     (∑ i, ∑ j, ((lab i : ℝ) * x i / ((lab i : ℝ) - s))
@@ -2123,10 +2134,11 @@ theorem exists_qform {n : Type*} [Fintype n] [DecidableEq n] (A : Matrix n n ℝ
     rw [LinearMap.BilinMap.toQuadraticMap_apply, Matrix.toLinearMap₂'_apply']⟩
 
 open Classical in
-/-- Theorem 6 (resolvent lock). For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:
+/-- Theorem 6 (resolvent lock), for every Loewner matrix (no parity condition).
+For `μ` not an eigenvalue and `x = (Q - μ)⁻¹ e₀`:
 `N_c(P_x) + d(x) + [x₀ < 0] = κ(μ)`, the number of eigenvalues of `Q` below `μ`. -/
 theorem lock {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ)
-    (hC : IsCvS Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
+    (hC : IsLoewner Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
     (hμ : IsUnit (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)).det)
     (x : Idx N → ℝ)
     (hx : x = Matrix.mulVec (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ))⁻¹ (Pi.single (e0 N) 1))
@@ -2288,7 +2300,7 @@ theorem simple_ker {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (lam : ℝ) (ξ : 
 /-- Theorem 5(a), step E3: at a real zero of `P_ξ`, `Q_λ(v_s, v_s) < 0 ↔ P_ξ'(s) P_{β⊙ξ}(s) > 0`
 (Lemma 6 with `Q_λ ξ = 0`). -/
 theorem eig_sign {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
-    (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ ξ = 0)
     (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) (hroot : (P ξ).eval s = 0) :
     ((fun i => (lab i : ℝ) * ξ i / ((lab i : ℝ) - s))
@@ -2379,11 +2391,13 @@ theorem vc_ne_zero' {N : ℕ} (x : Idx N → ℝ) (hne : ∃ k, k ≠ e0 N ∧ x
   · exact hs k h1
 
 open Classical in
-/-- Theorem 5(a) (index law, even sector). For a simple eigenvalue `λ` with even
+/-- Theorem 5(a) (index law, even sector), for a Loewner matrix with `b` odd
+(`a` need not be even). For a simple eigenvalue `λ` with even
 eigenvector `ξ ∉ ℝ e₀` whose `P_ξ` has simple zeros outside `I`:
 `N_c + d(ξ) = κ(λ)`. -/
 theorem index_even {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ)
-    (hC : IsCvS Q a b) (hQ : Q.IsHermitian) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hC : IsLoewner Q a b) (hb : ∀ i, b (Fin.rev i) = - b i)
+    (hQ : Q.IsHermitian) (lam : ℝ) (ξ : Idx N → ℝ)
     (hvec : Q.mulVec ξ = lam • ξ) (hne : ∃ k, k ≠ e0 N ∧ ξ k ≠ 0)
     (hsimple : Module.finrank ℝ (Module.End.eigenspace (Matrix.toLin' Q) lam) = 1)
     (heven : ∀ i, ξ (Fin.rev i) = ξ i)
@@ -2397,7 +2411,7 @@ theorem index_even {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → �
     intro h
     exact hk (by simp [h])
   have hker := simple_ker Q lam ξ hvec hξ0 hsimple
-  have hnd := nondeg_even hC lam ξ hξ hker heven hne
+  have hnd := nondeg_even hC hb lam ξ hξ hker heven hne
   have hηx : ∑ k, ξ k ≠ 0 := hnd.2
   have hc1 : ∑ k, (1 : ℝ) * ξ k ≠ 0 := by simpa using hηx
   have hB : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ))ᵀ
@@ -2512,5 +2526,30 @@ theorem index_even {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → �
     · rw [if_neg h1, if_neg (fun h => h1 (hiff.mpr h))]
   rw [← hk, hpb, hcount, Fintype.card_coe, ← hNc]
   omega
+
+open Classical in
+/-- Theorem 6 for CvS matrices, as stated in the note. -/
+theorem lock_cvs {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ)
+    (hC : IsCvS Q a b) (hQ : Q.IsHermitian) (μ : ℝ)
+    (hμ : IsUnit (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ)).det)
+    (x : Idx N → ℝ)
+    (hx : x = Matrix.mulVec (Q - μ • (1 : Matrix (Idx N) (Idx N) ℝ))⁻¹ (Pi.single (e0 N) 1))
+    (hx0 : x (e0 N) ≠ 0) (hηx : ∑ k, x k ≠ 0)
+    (hsep : (P x).Separable) (hout : ∀ j : Idx N, (P x).eval (lab j : ℝ) ≠ 0) :
+    Nc x + d b x + (if x (e0 N) < 0 then 1 else 0)
+      = (univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
+  lock Q a b hC.toLoewner hQ μ hμ x hx hx0 hηx hsep hout
+
+open Classical in
+/-- Theorem 5(a) for CvS matrices, as stated in the note. -/
+theorem index_even_cvs {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → ℝ)
+    (hC : IsCvS Q a b)
+    (hQ : Q.IsHermitian) (lam : ℝ) (ξ : Idx N → ℝ)
+    (hvec : Q.mulVec ξ = lam • ξ) (hne : ∃ k, k ≠ e0 N ∧ ξ k ≠ 0)
+    (hsimple : Module.finrank ℝ (Module.End.eigenspace (Matrix.toLin' Q) lam) = 1)
+    (heven : ∀ i, ξ (Fin.rev i) = ξ i)
+    (hsep : (P ξ).Separable) (hout : ∀ j : Idx N, (P ξ).eval (lab j : ℝ) ≠ 0) :
+    Nc ξ + d b ξ = (univ.filter (fun i => hQ.eigenvalues i < lam)).card :=
+  index_even Q a b hC.toLoewner hC.b_odd hQ lam ξ hvec hne hsimple heven hsep hout
 
 end CvS
