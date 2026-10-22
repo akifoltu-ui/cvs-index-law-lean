@@ -3,6 +3,10 @@
 Lean 4 / Mathlib formalization of the finite-dimensional theorems in
 
 > M. A. Oltulu, *Odd-sector, Pontryagin-space and index-law extensions of the Connes–van Suijlekom real-zeros theorem*, Zenodo, [doi:10.5281/zenodo.23459269](https://doi.org/10.5281/zenodo.23459269) (2026). ORCID [0009-0003-0928-0854](https://orcid.org/0009-0003-0928-0854).
+>
+> Formal verification supplement (EN/TR): M. A. Oltulu, *Formal verification of the index law and the resolvent lock in Lean 4*, Zenodo, [doi:10.5281/zenodo.23561287](https://doi.org/10.5281/zenodo.23561287) (2026); verified state: tag `v1.0`, commit `08a1c67`.
+>
+> Lemma numbers follow the note (version 2.2): Lemma 1 commutator, 2 rank-one determinant, 3 $`Q_\lambda`$-symmetry, 4 non-degeneracy, 6 norm identity, 7 Pontryagin balance.
 
 ## The statement (Theorem 6, resolvent lock)
 
@@ -21,29 +25,29 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | Lean declaration | Content | Proof |
 |---|---|---|
 | `CvS.isSymm_of_isCvS` | CvS matrices are symmetric | **proved** |
-| `CvS.commutator` | Lemma 5.1, $`[D,Q]=\beta\wedge\eta`$ | **proved** |
+| `CvS.commutator` | Lemma 1 (CvS Lemma 5.1), $`[D,Q]=\beta\wedge\eta`$ | **proved** |
 | `CvS.commutator_shift` | the same for $`Q-\mu`$ | **proved** |
-| `CvS.Dprime_mulVec_self` | Lemma 5.2(a), $`D'_\varphi\xi=0`$ | **proved** |
-| `CvS.det_Dprime` | Lemma 5.2(b), rank-one determinant | **proved** |
-| `CvS.Qlam_Dprime_isSymm` | Lemma 5.3, $`Q_\lambda D'_\varphi`$ symmetric for $`\varphi\in\mathrm{span}\{\eta,\beta\}`$ | **proved** |
-| `CvS.nondeg_even` | Lemma 5.4, even sector: $`\langle\beta,\xi\rangle=0`$, $`\langle\eta,\xi\rangle\neq0`$ | **proved** |
-| `CvS.Qlam_norm` | Lemma 5.5, $`Q_\lambda(w_s,w_s)=FG'-F'G`$ | **proved** |
+| `CvS.Dprime_mulVec_self` | Lemma 2(a), $`D'_\varphi\xi=0`$ | **proved** |
+| `CvS.det_Dprime` | Lemma 2(b), rank-one determinant | **proved** |
+| `CvS.Qlam_Dprime_isSymm` | Lemma 3, $`Q_\lambda D'_\varphi`$ symmetric for $`\varphi\in\mathrm{span}\{\eta,\beta\}`$ | **proved** |
+| `CvS.nondeg_even` | Lemma 4, even sector: $`\langle\beta,\xi\rangle=0`$, $`\langle\eta,\xi\rangle\neq0`$ | **proved** |
+| `CvS.Qlam_norm` | Lemma 6, $`Q_\lambda(w_s,w_s)=FG'-F'G`$ | **proved** |
 | `CvS.kappa_eq_sigNeg` | bridge: eigenvalue count below $`\mu`$ = `sigNeg` of $`Q-\mu`$ (Sylvester) | **proved** |
-| `CvS.eigvec_orth`, `CvS.block2_sigNeg` | Lemma 5.6 steps: eigenvector orthogonality; a 2×2 block with $`\det<0`$ has one negative direction | **proved** |
-| `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family` | Lemma 5.6 step 3: a $`B`$-orthogonal family with nonzero norms counts $`\kappa`$ | **proved** |
-| `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero` | Lemma 5.6 step 4a: a complex eigenvector with non-real eigenvalue has zero hermitian $`B`$-norm | **proved** |
-| `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth` | Lemma 5.6 step 4b: $`B(u,u)+B(w,w)=0`$; real eigenvectors are $`B`$-orthogonal to $`u,w`$ | **proved** |
-| `CvS.pair_orth`, `CvS.plane_split` | Lemma 5.6 step 4c: different pairs are $`B`$-orthogonal; each pair's plane splits into one positive and one negative direction | **proved** |
-| `CvS.re_im_combo`, `CvS.real_family_indep` | Lemma 5.6 step 4d: the real family $`\{v_i,\ \mathrm{Re}\,z_k,\ \mathrm{Im}\,z_k\}`$ is linearly independent | **proved** |
-| `CvS.null_vec_zero`, `CvS.not_null_member` | Lemma 5.6 step 4d: no member of a complete independent family is $`B`$-null to all members | **proved** |
-| `CvS.pontryagin_balance` | **Lemma 5.6 (Pontryagin balance)**: $`\kappa = \#\{\text{real eigenvectors of negative norm}\} + \#\{\text{non-real pairs}\}`$ | **proved** |
+| `CvS.eigvec_orth`, `CvS.block2_sigNeg` | Lemma 7 steps: eigenvector orthogonality; a 2×2 block with $`\det<0`$ has one negative direction | **proved** |
+| `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family` | Lemma 7 step 3: a $`B`$-orthogonal family with nonzero norms counts $`\kappa`$ | **proved** |
+| `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero` | Lemma 7 step 4a: a complex eigenvector with non-real eigenvalue has zero hermitian $`B`$-norm | **proved** |
+| `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth` | Lemma 7 step 4b: $`B(u,u)+B(w,w)=0`$; real eigenvectors are $`B`$-orthogonal to $`u,w`$ | **proved** |
+| `CvS.pair_orth`, `CvS.plane_split` | Lemma 7 step 4c: different pairs are $`B`$-orthogonal; each pair's plane splits into one positive and one negative direction | **proved** |
+| `CvS.re_im_combo`, `CvS.real_family_indep` | Lemma 7 step 4d: the real family $`\{v_i,\ \mathrm{Re}\,z_k,\ \mathrm{Im}\,z_k\}`$ is linearly independent | **proved** |
+| `CvS.null_vec_zero`, `CvS.not_null_member` | Lemma 7 step 4d: no member of a complete independent family is $`B`$-null to all members | **proved** |
+| `CvS.pontryagin_balance` | **Lemma 7 (Pontryagin balance)**: $`\kappa = \#\{\text{real eigenvectors of negative norm}\} + \#\{\text{non-real pairs}\}`$ | **proved** |
 | `CvS.Qmu_Dprime_lock_isSymm`, `CvS.F_zero_of_root`, `CvS.Dprime_eigvec_r`, `CvS.Dprime_eigvec_c` | Theorem 6 steps: lock symmetry; explicit eigenvectors $`v_s=\mathrm{lab}\,x/(\mathrm{lab}-s)`$ | **proved** |
 | `CvS.lock_norm_x`, `CvS.lock_norm` | Theorem 6 step: $`Q_\mu(x,x)=x_0`$, $`Q_\mu(v_s,v_s)=s^2(FG_2-F_2G)`$ | **proved** |
 | `CvS.P_deriv_eval`, `CvS.lock_sign` | Theorem 6 step: $`Q_\mu(v_s,v_s)<0 \iff P_x'(s)\,P_{\beta\odot x}(s)>0`$ | **proved** |
 | `CvS.charpoly_lock`, `CvS.natDegree_P_lock`, `CvS.card_roots_lock` | Theorem 6 step: $`\chi_{D'_\eta}=c^{-1}X\,P_x`$, $`\deg P_x=2N`$ | **proved** |
 | `CvS.card_roots_split` | Theorem 6 step: $`\#\{\text{real roots}\}+2\,\#\{\operatorname{Im}>0\}=\deg p`$ (separable real $`p`$) | **proved** |
 | `CvS.F_zero_of_root_c`, `CvS.vr_ne_zero`, `CvS.vc_ne_zero`, `CvS.inj_sum_elim`, `CvS.Nc_eq` | Theorem 6 step: eigenvectors nonzero, eigenvalues distinct, $`N_c=\#\{\operatorname{Im}>0\}`$ | **proved** |
-| `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker` | Theorem 5(a) step: Lemma 5.6 for a form with one-dimensional kernel | **proved** |
+| `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker` | Theorem 5(a) step: Lemma 7 for a form with one-dimensional kernel | **proved** |
 | `CvS.simple_ker`, `CvS.eig_sign` | Theorem 5(a) steps: $`\ker(Q-\lambda)=\mathbb{R}\xi`$; $`Q_\lambda(v_s,v_s)<0\iff P_\xi'(s)\,P_{\beta\odot\xi}(s)>0`$ | **proved** |
 | `CvS.index_even` | **Theorem 5(a), index law (even sector)**: $`N_c(P_\xi)+d(\xi)=\kappa(\lambda)`$ | **proved** |
 | `CvS.exists_qform` | every real square matrix gives the quadratic form $`w^{\top}Aw`$ | **proved** |
@@ -53,7 +57,7 @@ Contributions are welcome: open an issue or a pull request. A natural reusable b
 
 ## Build
 
-The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 5(a) (`CvS.index_even`) and Theorem 6 (`CvS.lock`) are fully proved; the library contains no `sorry` (axiom audit: `kontrol/Aksiyom.lean`).
+The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 5(a) (`CvS.index_even`) and Theorem 6 (`CvS.lock`) are fully proved; the library contains no `sorry` (axiom audit: `kontrol/Aksiyom.lean`). The parity fields `a_even`, `b_odd` of `IsCvS` enter only Lemma 4 (`nondeg_even`), which Theorem 5(a) uses; the formal proof of Theorem 6 rests on the commutator structure alone.
 
 ```
 lake exe cache get

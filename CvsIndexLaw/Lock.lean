@@ -19,19 +19,19 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.IsCvS`: matrices of Connes--van Suijlekom type.
 * `CvS.P`: the polynomial `P_ξ(s) = ∑_k ξ_k ∏_{j ≠ k} (j - s)`.
 * `CvS.commutator`: CvS Lemma 5.1, `[D, Q] = β ∧ η` (also for `Q - μ`).
-* `CvS.Dprime`, `CvS.det_Dprime`: Lemma 5.2, the rank-one determinant.
-* `CvS.Qlam_Dprime_isSymm`: Lemma 5.3, `D'_φ` is self-adjoint for the form of `Q_λ`.
-* `CvS.nondeg_even`: Lemma 5.4, `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0` in the even sector.
-* `CvS.Qlam_norm`: Lemma 5.5, `Q_λ(w_s, w_s) = F G' - F' G`.
+* `CvS.Dprime`, `CvS.det_Dprime`: Lemma 2, the rank-one determinant.
+* `CvS.Qlam_Dprime_isSymm`: Lemma 3, `D'_φ` is self-adjoint for the form of `Q_λ`.
+* `CvS.nondeg_even`: Lemma 4, `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0` in the even sector.
+* `CvS.Qlam_norm`: Lemma 6, `Q_λ(w_s, w_s) = F G' - F' G`.
 * `CvS.kappa_eq_sigNeg`: eigenvalue count below `μ` equals `sigNeg` of `Q - μ`.
-* `CvS.eigvec_orth`, `CvS.block2_sigNeg`: Lemma 5.6 (Pontryagin balance), steps 1-2.
-* `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family`: Lemma 5.6, step 3 (counting).
-* `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero`: Lemma 5.6, step 4a.
-* `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth`: Lemma 5.6, step 4b.
-* `CvS.pair_orth`, `CvS.plane_split` (+ helpers): Lemma 5.6, step 4c.
-* `CvS.re_im_combo`, `CvS.real_family_indep`: Lemma 5.6, step 4d (independence).
-* `CvS.null_vec_zero`, `CvS.not_null_member`: Lemma 5.6, step 4d (no null member).
-* `CvS.pontryagin_balance`: **Lemma 5.6 (Pontryagin balance)**.
+* `CvS.eigvec_orth`, `CvS.block2_sigNeg`: Lemma 7 (Pontryagin balance), steps 1-2.
+* `CvS.sigNeg_of_congr_diag`, `CvS.sigNeg_of_orth_family`: Lemma 7, step 3 (counting).
+* `CvS.eigvec_orth_field`, `CvS.conj_eigvec`, `CvS.herm_norm_zero`: Lemma 7, step 4a.
+* `CvS.herm_re`, `CvS.herm_split`, `CvS.real_pair_re_im`, `CvS.cross_orth`: Lemma 7, step 4b.
+* `CvS.pair_orth`, `CvS.plane_split` (+ helpers): Lemma 7, step 4c.
+* `CvS.re_im_combo`, `CvS.real_family_indep`: Lemma 7, step 4d (independence).
+* `CvS.null_vec_zero`, `CvS.not_null_member`: Lemma 7, step 4d (no null member).
+* `CvS.pontryagin_balance`: **Lemma 7 (Pontryagin balance)**.
 * `CvS.Qmu_Dprime_lock_isSymm`, `CvS.F_zero_of_root`, `CvS.Dprime_eigvec_r/_c`:
   Theorem 6, T6.1-T6.2.
 * `CvS.lock_norm_x`, `CvS.lock_norm`: Theorem 6, T6.3 (norms).
@@ -39,10 +39,10 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.charpoly_lock`, `CvS.natDegree_P_lock`, `CvS.card_roots_lock`: Theorem 6, T6.5 (degree).
 * `CvS.eval_map_conj`, `CvS.mem_roots_conj`, `CvS.card_roots_split`: Theorem 6, T6.6 (root count).
 * `CvS.F_zero_of_root_c`, `CvS.vr_ne_zero`, `CvS.vc_ne_zero`, `CvS.inj_sum_elim`, `CvS.Nc_eq`:
-  Theorem 6, T6.6 (hypotheses of Lemma 5.6 in the lock setting).
-* `CvS.lock`: **Theorem 6 (resolvent lock)**, assembled from Lemma 5.6 and the steps above.
+  Theorem 6, T6.6 (hypotheses of Lemma 7 in the lock setting).
+* `CvS.lock`: **Theorem 6 (resolvent lock)**, assembled from Lemma 7 and the steps above.
 * `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker`:
-  Theorem 5(a), step E1 (Lemma 5.6 with a one-dimensional kernel).
+  Theorem 5(a), step E1 (Lemma 7 with a one-dimensional kernel).
 * `CvS.simple_ker`, `CvS.eig_sign`: Theorem 5(a), steps E2-E3.
 * `CvS.index_even`: **Theorem 5(a) (index law, even sector)**, assembled like Theorem 6.
 * `CvS.lock`: Theorem 6, the resolvent lock.
@@ -140,7 +140,7 @@ theorem commutator_shift {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N
 def Dprime {N : ℕ} (φ ξ : Idx N → ℝ) : Matrix (Idx N) (Idx N) ℝ :=
   D N - (1 / ∑ k, φ k * ξ k) • Matrix.of fun i j => (lab i : ℝ) * ξ i * φ j
 
-/-- Lemma 5.2 (a): `D'_φ ξ = 0`. -/
+/-- Lemma 2 (a): `D'_φ ξ = 0`. -/
 theorem Dprime_mulVec_self {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k * ξ k ≠ 0) :
     (Dprime φ ξ).mulVec ξ = 0 := by
   ext i
@@ -155,12 +155,12 @@ theorem Dprime_mulVec_self {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k *
     ring
   rw [key, div_self hc, mul_one, sub_self]
 
--- Lemma 5.2 helper: evaluation of P_w at s.
+-- Lemma 2 helper: evaluation of P_w at s.
 theorem P_eval {N : ℕ} (w : Idx N → ℝ) (s : ℝ) :
     (P w).eval s = ∑ k, w k * ∏ j ∈ univ.erase k, ((lab j : ℝ) - s) := by
   simp [P, Polynomial.eval_finsetSum, Polynomial.eval_prod]
 
--- Lemma 5.2 helper: D'_φ - s = diag(j - s) + (rank one).  Stated for any one-point type ι.
+-- Lemma 2 helper: D'_φ - s = diag(j - s) + (rank one).  Stated for any one-point type ι.
 theorem Dprime_sub_eq {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ) (s : ℝ) :
     Dprime φ ξ - s • (1 : Matrix (Idx N) (Idx N) ℝ)
       = diagonal (fun i : Idx N => (lab i : ℝ) - s)
@@ -173,7 +173,7 @@ theorem Dprime_sub_eq {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ) 
     Finset.univ_unique, Finset.sum_singleton]
   split_ifs <;> ring
 
--- Lemma 5.2 helper: ∏_{j≠k} (j - s) = (∏_j (j - s)) / (k - s).
+-- Lemma 2 helper: ∏_{j≠k} (j - s) = (∏_j (j - s)) / (k - s).
 theorem prod_erase_eq_div {N : ℕ} (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0)
     (k : Idx N) :
     ∏ j ∈ univ.erase k, ((lab j : ℝ) - s)
@@ -181,7 +181,7 @@ theorem prod_erase_eq_div {N : ℕ} (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ)
   rw [eq_div_iff (hs k)]
   exact Finset.prod_erase_mul univ (fun j : Idx N => (lab j : ℝ) - s) (mem_univ k)
 
--- Lemma 5.2 helper: the single entry of the 1×1 matrix in the determinant lemma.
+-- Lemma 2 helper: the single entry of the 1×1 matrix in the determinant lemma.
 theorem rankOne_entry {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ) (s : ℝ) :
     ((1 + replicateRow ι φ * diagonal (fun i : Idx N => ((lab i : ℝ) - s)⁻¹)
         * replicateCol ι (fun i => -(1 / ∑ k, φ k * ξ k) * ((lab i : ℝ) * ξ i))
@@ -189,7 +189,7 @@ theorem rankOne_entry {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ) 
       = 1 + ∑ k, φ k * ((lab k : ℝ) - s)⁻¹ * (-(1 / ∑ k, φ k * ξ k) * ((lab k : ℝ) * ξ k)) := by
   simp [Matrix.mul_apply, Matrix.diagonal_apply, mul_ite, Finset.sum_ite_eq']
 
--- Lemma 5.2 helper: the j/(j - s) = 1 + s/(j - s) rewriting of the sum.
+-- Lemma 2 helper: the j/(j - s) = 1 + s/(j - s) rewriting of the sum.
 theorem rankOne_sum {N : ℕ} (φ ξ : Idx N → ℝ) (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0)
     (hc : ∑ k, φ k * ξ k ≠ 0) :
     ∑ k, φ k * ((lab k : ℝ) - s)⁻¹ * (-(1 / ∑ k, φ k * ξ k) * ((lab k : ℝ) * ξ k))
@@ -203,7 +203,7 @@ theorem rankOne_sum {N : ℕ} (φ ξ : Idx N → ℝ) (s : ℝ) (hs : ∀ j : Id
   rw [Finset.sum_congr rfl fun k _ => hk k, Finset.sum_sub_distrib, ← Finset.mul_sum,
     ← Finset.mul_sum, neg_mul, one_div, inv_mul_cancel₀ hc]
 
--- Lemma 5.2 helper: pull the full product out of the sum.
+-- Lemma 2 helper: pull the full product out of the sum.
 theorem prod_sum_div {N : ℕ} (φ ξ : Idx N → ℝ) (s : ℝ) :
     ∑ k, φ k * ξ k * ((∏ j : Idx N, ((lab j : ℝ) - s)) / ((lab k : ℝ) - s))
       = (∏ j : Idx N, ((lab j : ℝ) - s)) * ∑ k, φ k * ξ k * ((lab k : ℝ) - s)⁻¹ := by
@@ -212,7 +212,7 @@ theorem prod_sum_div {N : ℕ} (φ ξ : Idx N → ℝ) (s : ℝ) :
   rw [div_eq_mul_inv]
   ring
 
--- Lemma 5.2 helper: the determinant identity away from the labels, over any one-point type ι,
+-- Lemma 2 helper: the determinant identity away from the labels, over any one-point type ι,
 -- so that every instance on ι comes from `Unique ι` exactly as in Mathlib's lemma.
 theorem det_Dprime_aux {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ)
     (hc : ∑ k, φ k * ξ k ≠ 0) (s : ℝ) (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) :
@@ -235,14 +235,14 @@ theorem det_Dprime_aux {N : ℕ} {ι : Type} [Unique ι] (φ ξ : Idx N → ℝ)
   rw [prod_sum_div]
   ring
 
--- Lemma 5.2 helper: the same statement; ι no longer appears, so any one-point type will do.
+-- Lemma 2 helper: the same statement; ι no longer appears, so any one-point type will do.
 theorem det_Dprime_off_labels {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k * ξ k ≠ 0) (s : ℝ)
     (hs : ∀ j : Idx N, (lab j : ℝ) - s ≠ 0) :
     (Dprime φ ξ - s • (1 : Matrix (Idx N) (Idx N) ℝ)).det
       = -(s / ∑ k, φ k * ξ k) * (P fun k => φ k * ξ k).eval s :=
   det_Dprime_aux (ι := Unit) φ ξ hc s hs
 
-/-- Lemma 5.2 (b): `det (D'_φ - s) = -(s / c) · P_{φ⊙ξ}(s)` for every real `s`.
+/-- Lemma 2 (b): `det (D'_φ - s) = -(s / c) · P_{φ⊙ξ}(s)` for every real `s`.
 Away from the labels this is the matrix determinant lemma; at the finitely many
 labels it follows by continuity. -/
 theorem det_Dprime {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k * ξ k ≠ 0) (s : ℝ) :
@@ -263,7 +263,7 @@ theorem det_Dprime {N : ℕ} (φ ξ : Idx N → ℝ) (hc : ∑ k, φ k * ξ k �
   have heq := Continuous.ext_on hdense h1 h2 fun t ht => det_Dprime_off_labels φ ξ hc t ht
   exact congrFun heq s
 
-/-- Lemma 5.3 (Q_λ-symmetry criterion). If `Q_λ ξ = 0` and `φ = x η + y β` with
+/-- Lemma 3 (Q_λ-symmetry criterion). If `Q_λ ξ = 0` and `φ = x η + y β` with
 `c = ⟨φ, ξ⟩ ≠ 0`, then `Q_λ D'_φ` is symmetric. -/
 theorem Qlam_Dprime_isSymm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
     (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
@@ -393,7 +393,7 @@ theorem Qlam_D_apply {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N →
   rw [e1, e2, h0] at h1
   linarith
 
-/-- Lemma 5.4 (non-degeneracy), even sector. If `λ` is simple with even eigenvector
+/-- Lemma 4 (non-degeneracy), even sector. If `λ` is simple with even eigenvector
 `ξ ∉ ℝ e₀`, then `⟨β, ξ⟩ = 0` and `⟨η, ξ⟩ ≠ 0`. Simplicity is stated as: every vector
 in the kernel of `Q - λ` is a multiple of `ξ`. -/
 theorem nondeg_even {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
@@ -427,7 +427,7 @@ theorem nondeg_even {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → 
   have hlab : (lab k : ℝ) ≠ 0 := by exact_mod_cast hz
   exact hξk ((mul_eq_zero.mp (hzero k)).resolve_left hlab)
 
-/-- Lemma 5.5 (normalization). With `w_s = (D - s)⁻¹ ξ`, `F = ⟨η, w_s⟩`, `G = ⟨β, w_s⟩`
+/-- Lemma 6 (normalization). With `w_s = (D - s)⁻¹ ξ`, `F = ⟨η, w_s⟩`, `G = ⟨β, w_s⟩`
 and the derivatives written as finite sums `F' = Σ ξ_k/(k-s)²`, `G' = Σ b_k ξ_k/(k-s)²`:
 `Q_λ(w_s, w_s) = F G' - F' G`. -/
 theorem Qlam_norm {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
@@ -567,7 +567,7 @@ theorem kappa_eq_sigNeg {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (hQ : Q.IsHer
     sigNeg q = (univ.filter (fun i => hQ.eigenvalues i < μ)).card :=
   kappa_eq_sigNeg' Q hQ μ q hq
 
-/-- Lemma 5.6, step 1: eigenvectors of a `B`-self-adjoint `T` for distinct real eigenvalues
+/-- Lemma 7, step 1: eigenvectors of a `B`-self-adjoint `T` for distinct real eigenvalues
 are `B`-orthogonal. -/
 theorem eigvec_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ} (hB : Bᵀ = B)
     (hBT : (B * T)ᵀ = B * T) {v w : n → ℝ} {r s : ℝ}
@@ -586,7 +586,7 @@ theorem eigvec_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ} (hB : Bᵀ = 
   · exact absurd (sub_eq_zero.mp h) hrs
   · exact h
 
-/-- Lemma 5.6, step 2: a symmetric 2x2 block with negative determinant has signature (1,1). -/
+/-- Lemma 7, step 2: a symmetric 2x2 block with negative determinant has signature (1,1). -/
 theorem block2_sigNeg (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian)
     (hdet : M.det < 0)
     (q : QuadraticForm ℝ (Fin 2 → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (M *ᵥ x)) :
@@ -604,7 +604,7 @@ theorem block2_sigNeg (M : Matrix (Fin 2) (Fin 2) ℝ) (hM : M.IsHermitian)
   · rw [if_pos h0, if_neg (not_lt.mpr h1.le)]
 
 open QuadraticMap in
-/-- Lemma 5.6, step 3a: if `Pᵀ A P = diagonal d` with `P` invertible, then `sigNeg` of
+/-- Lemma 7, step 3a: if `Pᵀ A P = diagonal d` with `P` invertible, then `sigNeg` of
 `x ↦ x ⬝ᵥ A x` counts the negative entries of `d`. -/
 theorem sigNeg_of_congr_diag {n : Type*} [Fintype n] [DecidableEq n] (A P : Matrix n n ℝ)
     (d : n → ℝ) (hP : IsUnit P.det) (hD : Pᵀ * A * P = diagonal d)
@@ -634,7 +634,7 @@ theorem sigNeg_of_congr_diag {n : Type*} [Fintype n] [DecidableEq n] (A P : Matr
     ext i; simp
   rw [hset, Set.ncard_coe_finset]
 
-/-- Lemma 5.6, step 3b: `n` pairwise `B`-orthogonal vectors with nonzero norms: `sigNeg`
+/-- Lemma 7, step 3b: `n` pairwise `B`-orthogonal vectors with nonzero norms: `sigNeg`
 counts the negative norms. -/
 theorem sigNeg_of_orth_family {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
     (v : n → n → ℝ) (horth : ∀ i j, i ≠ j → v i ⬝ᵥ (B *ᵥ v j) = 0)
@@ -663,7 +663,7 @@ theorem sigNeg_of_orth_family {n : Type*} [Fintype n] [DecidableEq n] (B : Matri
     exact (Finset.prod_ne_zero_iff.mpr fun i _ => hnz i) h1.symm
   exact sigNeg_of_congr_diag B P d (isUnit_iff_ne_zero.mpr hdet) hD q hq
 
-/-- Lemma 5.6, step 4a(i): step 1 over an arbitrary field. -/
+/-- Lemma 7, step 4a(i): step 1 over an arbitrary field. -/
 theorem eigvec_orth_field {K : Type*} [Field K] {n : Type*} [Fintype n] {B T : Matrix n n K}
     (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {v w : n → K} {r s : K}
     (hv : T *ᵥ v = r • v) (hw : T *ᵥ w = s • w) (hrs : r ≠ s) :
@@ -681,7 +681,7 @@ theorem eigvec_orth_field {K : Type*} [Field K] {n : Type*} [Fintype n] {B T : M
   · exact absurd (sub_eq_zero.mp h) hrs
   · exact h
 
-/-- Lemma 5.6, step 4a(ii): for a real matrix, conjugating an eigenvector conjugates the
+/-- Lemma 7, step 4a(ii): for a real matrix, conjugating an eigenvector conjugates the
 eigenvalue. -/
 theorem conj_eigvec {n : Type*} [Fintype n] {T : Matrix n n ℝ} {z : n → ℂ} {ζ : ℂ}
     (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) :
@@ -692,7 +692,7 @@ theorem conj_eigvec {n : Type*} [Fintype n] {T : Matrix n n ℝ} {z : n → ℂ}
     star_sum, star_mul', Pi.star_apply] at h ⊢
   simpa [Complex.star_def, Complex.conj_ofReal, mul_comm] using h
 
-/-- Lemma 5.6, step 4a(iii): a complex eigenvector of a `B`-self-adjoint real `T` with
+/-- Lemma 7, step 4a(iii): a complex eigenvector of a `B`-self-adjoint real `T` with
 non-real eigenvalue has zero hermitian `B`-norm: `z ⬝ᵥ B (conj z) = 0`. -/
 theorem herm_norm_zero {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
     (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z : n → ℂ} {ζ : ℂ}
@@ -705,7 +705,7 @@ theorem herm_norm_zero {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
     rw [← Matrix.map_mul, ← Matrix.transpose_map, hBT]
   exact eigvec_orth_field hBc hBTc hz (conj_eigvec hz) hζ
 
-/-- Lemma 5.6, step 4b: `Re (z ⬝ B conj z) = B(u,u) + B(w,w)` for `z = u + i w`. -/
+/-- Lemma 7, step 4b: `Re (z ⬝ B conj z) = B(u,u) + B(w,w)` for `z = u + i w`. -/
 theorem herm_re {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z : n → ℂ) :
     (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ star z)).re
       = (fun i => (z i).re) ⬝ᵥ (B *ᵥ fun i => (z i).re)
@@ -718,7 +718,7 @@ theorem herm_re {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z : n → ℂ) :
   refine Finset.sum_congr rfl fun j _ => ?_
   simp [Complex.mul_re, Complex.mul_im]
 
-/-- Lemma 5.6, step 4b: for a non-real eigenvalue, `B(u,u) + B(w,w) = 0`. -/
+/-- Lemma 7, step 4b: for a non-real eigenvalue, `B(u,u) + B(w,w) = 0`. -/
 theorem herm_split {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
     (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z : n → ℂ} {ζ : ℂ}
     (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hζ : ζ ≠ star ζ) :
@@ -728,7 +728,7 @@ theorem herm_split {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
   rw [herm_re B z] at h
   simpa using h
 
-/-- Lemma 5.6, step 4b: real and imaginary parts of `v ⬝ B z` for real `v`. -/
+/-- Lemma 7, step 4b: real and imaginary parts of `v ⬝ B z` for real `v`. -/
 theorem real_pair_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (v : n → ℝ) (z : n → ℂ) :
     ((fun i => (v i : ℂ)) ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ z)).re
         = v ⬝ᵥ (B *ᵥ fun i => (z i).re) ∧
@@ -742,7 +742,7 @@ theorem real_pair_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (v : n → 
   · refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
     simp [Complex.mul_re, Complex.mul_im]
 
-/-- Lemma 5.6, step 4b: a real eigenvector is `B`-orthogonal to both parts of `z`. -/
+/-- Lemma 7, step 4b: a real eigenvector is `B`-orthogonal to both parts of `z`. -/
 theorem cross_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
     (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {v : n → ℝ} {r : ℝ} (hv : T *ᵥ v = r • v)
     {z : n → ℂ} {ζ : ℂ} (hz : T.map (algebraMap ℝ ℂ) *ᵥ z = ζ • z) (hne : (r : ℂ) ≠ ζ) :
@@ -761,7 +761,7 @@ theorem cross_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
   rw [h0] at hre him
   exact ⟨by simpa using hre.symm, by simpa using him.symm⟩
 
-/-- Lemma 5.6, step 4c: Re/Im of the bilinear pairing of two complex vectors, in terms of
+/-- Lemma 7, step 4c: Re/Im of the bilinear pairing of two complex vectors, in terms of
 real and imaginary parts. -/
 theorem cc_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z y : n → ℂ) :
     (z ⬝ᵥ (B.map (algebraMap ℝ ℂ) *ᵥ y)).re
@@ -807,7 +807,7 @@ theorem cc_conj_re_im {n : Type*} [Fintype n] (B : Matrix n n ℝ) (z y : n → 
     simp [Complex.mul_re, Complex.mul_im]
     ring
 
-/-- Lemma 5.6, step 4c(1): two complex eigenvectors from different non-real pairs: their real
+/-- Lemma 7, step 4c(1): two complex eigenvectors from different non-real pairs: their real
 and imaginary parts are pairwise `B`-orthogonal. -/
 theorem pair_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
     (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T) {z y : n → ℂ} {ζ ω : ℂ}
@@ -831,7 +831,7 @@ theorem pair_orth {n : Type*} [Fintype n] {B T : Matrix n n ℝ}
   simp only [Complex.zero_re, Complex.zero_im] at r1 i1 r2 i2
   exact ⟨by linarith, by linarith, by linarith, by linarith⟩
 
-/-- Lemma 5.6, step 4c: numerical core of the plane split (no square roots). -/
+/-- Lemma 7, step 4c: numerical core of the plane split (no square roots). -/
 theorem plane_split_num (a c : ℝ) (h : a ≠ 0 ∨ c ≠ 0) :
     ∃ α β γ δ : ℝ, α * γ * a + (α * δ + β * γ) * c - β * δ * a = 0 ∧
       (α ^ 2 * a + 2 * α * β * c - β ^ 2 * a) * (γ ^ 2 * a + 2 * γ * δ * c - δ ^ 2 * a) < 0 ∧
@@ -859,7 +859,7 @@ theorem bil_symm {n : Type*} [Fintype n] {B : Matrix n n ℝ} (hB : Bᵀ = B) (x
     x ⬝ᵥ (B *ᵥ y) = y ⬝ᵥ (B *ᵥ x) := by
   rw [dotProduct_mulVec, ← mulVec_transpose, hB, dotProduct_comm]
 
-/-- Lemma 5.6, step 4c(2): inside the plane of `u, w` with `B(u,u) + B(w,w) = 0` (and `B` not
+/-- Lemma 7, step 4c(2): inside the plane of `u, w` with `B(u,u) + B(w,w) = 0` (and `B` not
 identically zero there), two `B`-orthogonal combinations with norms of opposite sign. -/
 theorem plane_split {n : Type*} [Fintype n] {B : Matrix n n ℝ} (hB : Bᵀ = B) (u w : n → ℝ)
     (hsum : u ⬝ᵥ (B *ᵥ u) + w ⬝ᵥ (B *ᵥ w) = 0)
@@ -878,14 +878,14 @@ theorem plane_split {n : Type*} [Fintype n] {B : Matrix n n ℝ} (hB : Bᵀ = B)
     convert h2 using 1
     ring
 
-/-- Lemma 5.6, step 4d: per-term identity behind the real/complex switch:
+/-- Lemma 7, step 4d: per-term identity behind the real/complex switch:
 `(g₁ - i g₂) z + (g₁ + i g₂) conj z = 2 (g₁ Re z + g₂ Im z)`. -/
 theorem re_im_combo (g₁ g₂ : ℝ) (z : ℂ) :
     ((g₁ : ℂ) - Complex.I * g₂) * z + ((g₁ : ℂ) + Complex.I * g₂) * star z
       = ((2 * (g₁ * z.re + g₂ * z.im) : ℝ) : ℂ) := by
   apply Complex.ext <;> simp [Complex.mul_re, Complex.mul_im] <;> ring
 
-/-- Lemma 5.6, step 4d: the real family `{v_i, Re z_k, Im z_k}` is linearly independent over `ℝ`
+/-- Lemma 7, step 4d: the real family `{v_i, Re z_k, Im z_k}` is linearly independent over `ℝ`
 (from complex independence of eigenvectors with distinct eigenvalues). -/
 theorem real_family_indep {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
     (T : Matrix n n ℝ) (r : ι → ℝ) (v : ι → n → ℝ)
@@ -958,7 +958,7 @@ theorem real_family_indep {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype
     simp [hh] at e
     exact e
 
-/-- Lemma 5.6, step 4d: with an independent family and `det B ≠ 0`, only `0` is `B`-orthogonal
+/-- Lemma 7, step 4d: with an independent family and `det B ≠ 0`, only `0` is `B`-orthogonal
 to every member. -/
 theorem null_vec_zero {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
     (hBdet : B.det ≠ 0) (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (y : n → ℝ)
@@ -984,14 +984,14 @@ theorem null_vec_zero {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n �
   rw [Matrix.det_mul, Matrix.det_transpose, Matrix.det_transpose] at hdet
   exact mul_ne_zero hPdet hBdet hdet
 
-/-- Lemma 5.6, step 4d: no member of an independent family is `B`-orthogonal to every member
+/-- Lemma 7, step 4d: no member of an independent family is `B`-orthogonal to every member
 (`det B ≠ 0`). -/
 theorem not_null_member {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
     (hBdet : B.det ≠ 0) (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (a : n)
     (ha : ∀ b, W a ⬝ᵥ (B *ᵥ W b) = 0) : False :=
   hW.ne_zero a (null_vec_zero B hBdet W hW (W a) ha)
 
-/-- **Lemma 5.6 (Pontryagin balance).** For `B` symmetric and invertible and `T` `B`-self-adjoint
+/-- **Lemma 7 (Pontryagin balance).** For `B` symmetric and invertible and `T` `B`-self-adjoint
 with an explicit eigen-system — real pairs `(r_i, v_i)`, complex pairs `(ζ_k, z_k)`, all values
 `r_i, ζ_k, conj ζ_k` distinct, `|ι| + 2|κ| = n` — the negative index of `B` equals the number of
 real eigenvectors of negative norm plus the number of non-real pairs. -/
@@ -1929,7 +1929,7 @@ theorem sigNeg_of_orth_family_ker {n : Type*} [Fintype n] [DecidableEq n] (B : M
     · exact hpair b hb
   exact sigNeg_of_congr_diag B P d (isUnit_iff_ne_zero.mpr hdet) hD q hq
 
-/-- Theorem 5(a), step E1: **Lemma 5.6 for a singular form** whose kernel is spanned by one
+/-- Theorem 5(a), step E1: **Lemma 7 for a singular form** whose kernel is spanned by one
 member `v i₀` of the real family (replaces `det B ≠ 0`). -/
 theorem pontryagin_balance_ker {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
     {B T : Matrix n n ℝ} (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T)
@@ -2286,7 +2286,7 @@ theorem simple_ker {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (lam : ℝ) (ξ : 
     | simpa using h'.symm
 
 /-- Theorem 5(a), step E3: at a real zero of `P_ξ`, `Q_λ(v_s, v_s) < 0 ↔ P_ξ'(s) P_{β⊙ξ}(s) > 0`
-(Lemma 5.5 with `Q_λ ξ = 0`). -/
+(Lemma 6 with `Q_λ ξ = 0`). -/
 theorem eig_sign {N : ℕ} {Q : Matrix (Idx N) (Idx N) ℝ} {a b : Idx N → ℝ}
     (hC : IsCvS Q a b) (lam : ℝ) (ξ : Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ ξ = 0)
@@ -2389,7 +2389,7 @@ theorem index_even {N : ℕ} (Q : Matrix (Idx N) (Idx N) ℝ) (a b : Idx N → �
     (heven : ∀ i, ξ (Fin.rev i) = ξ i)
     (hsep : (P ξ).Separable) (hout : ∀ j : Idx N, (P ξ).eval (lab j : ℝ) ≠ 0) :
     Nc ξ + d b ξ = (univ.filter (fun i => hQ.eigenvalues i < lam)).card := by
-  -- ξ spans the kernel of Q - λ (simple eigenvalue); Lemma 5.4 gives ⟨η, ξ⟩ ≠ 0
+  -- ξ spans the kernel of Q - λ (simple eigenvalue); Lemma 4 gives ⟨η, ξ⟩ ≠ 0
   have hξ : (Q - lam • (1 : Matrix (Idx N) (Idx N) ℝ)) *ᵥ ξ = 0 := by
     rw [Matrix.sub_mulVec, smul_one_mulVec, hvec, sub_self]
   have hξ0 : ξ ≠ 0 := by

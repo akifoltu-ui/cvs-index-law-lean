@@ -30,19 +30,19 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
     (hC : CvS.IsCvS Q a b) : CvS.D N * Q - Q * CvS.D N = CvS.wedge (fun _ => 1) b :=
   CvS.commutator hC
 
--- CORRECT input: Lemma 5.2(b) is accepted.
+-- CORRECT input: Lemma 2(b) is accepted.
 example {N : ℕ} (φ ξ : CvS.Idx N → ℝ) (hc : ∑ k, φ k * ξ k ≠ 0) (s : ℝ) :
     (CvS.Dprime φ ξ - s • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).det
       = -(s / ∑ k, φ k * ξ k) * (CvS.P fun k => φ k * ξ k).eval s :=
   CvS.det_Dprime φ ξ hc s
 
--- CORRUPTED input: Lemma 5.2(b) with the sign of s/c flipped. This must FAIL.
+-- CORRUPTED input: Lemma 2(b) with the sign of s/c flipped. This must FAIL.
 example {N : ℕ} (φ ξ : CvS.Idx N → ℝ) (hc : ∑ k, φ k * ξ k ≠ 0) (s : ℝ) :
     (CvS.Dprime φ ξ - s • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).det
       = (s / ∑ k, φ k * ξ k) * (CvS.P fun k => φ k * ξ k).eval s :=
   CvS.det_Dprime φ ξ hc s
 
--- CORRECT input: Lemma 5.3 for φ = x η + y β is accepted.
+-- CORRECT input: Lemma 3 for φ = x η + y β is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
     (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0) (x y : ℝ)
@@ -51,7 +51,7 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
       * CvS.Dprime (fun k => x + y * b k) ξ).IsSymm :=
   CvS.Qlam_Dprime_isSymm hC lam ξ hξ x y hc
 
--- CORRUPTED input: Lemma 5.3 claimed for an arbitrary φ outside span{η, β}.
+-- CORRUPTED input: Lemma 3 claimed for an arbitrary φ outside span{η, β}.
 -- Numerically the asymmetry is 0.06–21 there. This must FAIL.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
     (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ φ : CvS.Idx N → ℝ)
@@ -60,7 +60,7 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
     ((Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)) * CvS.Dprime φ ξ).IsSymm :=
   CvS.Qlam_Dprime_isSymm hC lam ξ hξ x y hc
 
--- CORRECT input: Lemma 5.4 for an even eigenvector is accepted.
+-- CORRECT input: Lemma 4 for an even eigenvector is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
     (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
@@ -81,7 +81,7 @@ example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → 
     ∑ k, ξ k ≠ 0 :=
   (CvS.nondeg_even hC lam ξ hξ hsimple hodd hne).2
 
--- CORRECT input: Lemma 5.5, Q_λ(w,w) = F G' - F' G, is accepted.
+-- CORRECT input: Lemma 6, Q_λ(w,w) = F G' - F' G, is accepted.
 example {N : ℕ} {Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ} {a b : CvS.Idx N → ℝ}
     (hC : CvS.IsCvS Q a b) (lam : ℝ) (ξ : CvS.Idx N → ℝ)
     (hξ : (Q - lam • (1 : Matrix (CvS.Idx N) (CvS.Idx N) ℝ)).mulVec ξ = 0)
