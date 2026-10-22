@@ -43,6 +43,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.charpoly_lock`, `CvS.natDegree_P_lock`, `CvS.card_roots_lock` | Theorem 6 step: $`\chi_{D'_\eta}=c^{-1}X\,P_x`$, $`\deg P_x=2N`$ | **proved** |
 | `CvS.card_roots_split` | Theorem 6 step: $`\#\{\text{real roots}\}+2\,\#\{\operatorname{Im}>0\}=\deg p`$ (separable real $`p`$) | **proved** |
 | `CvS.F_zero_of_root_c`, `CvS.vr_ne_zero`, `CvS.vc_ne_zero`, `CvS.inj_sum_elim`, `CvS.Nc_eq` | Theorem 6 step: eigenvectors nonzero, eigenvalues distinct, $`N_c=\#\{\operatorname{Im}>0\}`$ | **proved** |
+| `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker` | Theorem 5(a) step: Lemma 5.6 for a form with one-dimensional kernel | **proved** |
 | `CvS.index_even` | Theorem 5(a), index law | to be completed |
 | `CvS.exists_qform` | every real square matrix gives the quadratic form $`w^{\top}Aw`$ | **proved** |
 | `CvS.lock` | **Theorem 6, resolvent lock**: $`N_c(P_x)+d(x)+[x_0<0]=\kappa(\mu)`$ | **proved** |
@@ -56,7 +57,7 @@ The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 6 (`CvS.lock`) 
 ```
 lake exe cache get
 lake build
-lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly fifty-four errors expected
+lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly fifty-seven errors expected
 ```
 
 ## License

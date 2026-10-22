@@ -41,6 +41,8 @@ The setting is finite-dimensional linear algebra over `ℝ`.
 * `CvS.F_zero_of_root_c`, `CvS.vr_ne_zero`, `CvS.vc_ne_zero`, `CvS.inj_sum_elim`, `CvS.Nc_eq`:
   Theorem 6, T6.6 (hypotheses of Lemma 5.6 in the lock setting).
 * `CvS.lock`: **Theorem 6 (resolvent lock)**, assembled from Lemma 5.6 and the steps above.
+* `CvS.orth_all_ker`, `CvS.sigNeg_of_orth_family_ker`, `CvS.pontryagin_balance_ker`:
+  Theorem 5(a), step E1 (Lemma 5.6 with a one-dimensional kernel).
 * `CvS.lock`: Theorem 6, the resolvent lock.
 * `CvS.index_even`: Theorem 5(a), the index law in the even sector.
 -/
@@ -1839,6 +1841,278 @@ theorem Nc_eq {N : ℕ} (ξ : Idx N → ℝ) (hsep : (P ξ).Separable) :
   unfold Nc
   rw [hfil]
   omega
+
+/-- Theorem 5(a), step E1: a vector `B`-orthogonal to a basis lies in `ker B` (`B` symmetric). -/
+theorem orth_all_ker {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ) (hB : Bᵀ = B)
+    (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (y : n → ℝ)
+    (hy : ∀ b, y ⬝ᵥ (B *ᵥ W b) = 0) : B *ᵥ y = 0 := by
+  set P : Matrix n n ℝ := Matrix.of fun i j => W j i with hP
+  have hPdet : P.det ≠ 0 := by
+    intro h0
+    obtain ⟨c, hc0, hc⟩ := Matrix.exists_mulVec_eq_zero_iff.mpr h0
+    rw [Fintype.linearIndependent_iff] at hW
+    have hsum : ∑ j, c j • W j = 0 := by
+      funext i
+      have h := congrFun hc i
+      simpa [P, Matrix.mulVec, dotProduct, Finset.sum_apply, mul_comm] using h
+    exact hc0 (funext fun j => hW c hsum j)
+  have hz : (Pᵀ * Bᵀ) *ᵥ y = 0 := by
+    funext b
+    rw [← Matrix.mulVec_mulVec]
+    have h := hy b
+    rw [dotProduct_mulVec, ← mulVec_transpose, dotProduct_comm] at h
+    simpa [P, Matrix.mulVec, dotProduct] using h
+  have hPt : IsUnit (Pᵀ).det := by
+    rw [Matrix.det_transpose]
+    exact isUnit_iff_ne_zero.mpr hPdet
+  have hBy : Bᵀ *ᵥ y = 0 := by
+    have e : Bᵀ = (Pᵀ)⁻¹ * (Pᵀ * Bᵀ) := by
+      rw [← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ hPt, Matrix.one_mul]
+    rw [e, ← Matrix.mulVec_mulVec, hz, Matrix.mulVec_zero]
+  rwa [hB] at hBy
+
+/-- Theorem 5(a), step E1: a `B`-orthogonal family whose norms are nonzero except at one
+nonzero member is a basis, and `sigNeg` counts its negative norms. -/
+theorem sigNeg_of_orth_family_ker {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (v : n → n → ℝ) (horth : ∀ i j, i ≠ j → v i ⬝ᵥ (B *ᵥ v j) = 0) (i₀ : n)
+    (hnz : ∀ i, i ≠ i₀ → v i ⬝ᵥ (B *ᵥ v i) ≠ 0) (hv0 : v i₀ ≠ 0)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card := by
+  set P : Matrix n n ℝ := Matrix.of fun a i => v i a with hPdef
+  set d : n → ℝ := fun i => v i ⬝ᵥ (B *ᵥ v i) with hd
+  have hentry : ∀ i j, (Pᵀ * B * P) i j = v i ⬝ᵥ (B *ᵥ v j) := by
+    intro i j
+    simp only [P, Matrix.mul_apply, Matrix.transpose_apply, Matrix.of_apply, dotProduct,
+      Matrix.mulVec, Finset.sum_mul, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
+  have hD : Pᵀ * B * P = diagonal d := by
+    ext i j
+    rw [hentry]
+    by_cases hij : i = j
+    · subst hij; simp [d]
+    · rw [horth i j hij, Matrix.diagonal_apply_ne _ hij]
+  have hlin : ∀ (c : n → ℝ) (w : n → ℝ), (∑ j, c j • v j) ⬝ᵥ w = ∑ j, c j * (v j ⬝ᵥ w) := by
+    intro c w
+    simp only [dotProduct, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.sum_mul,
+      Finset.mul_sum]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
+  have hdet : P.det ≠ 0 := by
+    intro h0
+    obtain ⟨c, hc0, hc⟩ := Matrix.exists_mulVec_eq_zero_iff.mpr h0
+    have hsum : ∑ j, c j • v j = 0 := by
+      funext i
+      have h := congrFun hc i
+      simpa [P, Matrix.mulVec, dotProduct, Finset.sum_apply, mul_comm] using h
+    have hpair : ∀ b, b ≠ i₀ → c b = 0 := by
+      intro b hb
+      have h1 : (∑ j, c j • v j) ⬝ᵥ (B *ᵥ v b) = c b * (v b ⬝ᵥ (B *ᵥ v b)) := by
+        rw [hlin]
+        exact Finset.sum_eq_single b (fun j _ hj => by rw [horth j b hj, mul_zero])
+          (fun h => absurd (Finset.mem_univ b) h)
+      rw [hsum, zero_dotProduct] at h1
+      exact (mul_eq_zero.mp h1.symm).resolve_right (hnz b hb)
+    have hc00 : c i₀ = 0 := by
+      have h2 : ∑ j, c j • v j = c i₀ • v i₀ :=
+        Finset.sum_eq_single i₀ (fun j _ hj => by rw [hpair j hj, zero_smul])
+          (fun h => absurd (Finset.mem_univ i₀) h)
+      rw [hsum] at h2
+      exact (smul_eq_zero.mp h2.symm).resolve_right hv0
+    apply hc0
+    funext b
+    by_cases hb : b = i₀
+    · subst hb
+      exact hc00
+    · exact hpair b hb
+  exact sigNeg_of_congr_diag B P d (isUnit_iff_ne_zero.mpr hdet) hD q hq
+
+/-- Theorem 5(a), step E1: **Lemma 5.6 for a singular form** whose kernel is spanned by one
+member `v i₀` of the real family (replaces `det B ≠ 0`). -/
+theorem pontryagin_balance_ker {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    {B T : Matrix n n ℝ} (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T)
+    (r : ι → ℝ) (v : ι → n → ℝ) (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (i₀ : ι) (hker : ∀ y, B *ᵥ y = 0 → ∃ t : ℝ, y = t • v i₀)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k)))))
+    (hcard : Fintype.card ι + 2 * Fintype.card κ = Fintype.card n)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card + Fintype.card κ := by
+  classical
+  set U : κ → n → ℝ := fun k j => (z k j).re with hU
+  set Wm : κ → n → ℝ := fun k j => (z k j).im with hWm
+  -- distinct eigenvalues, from injectivity
+  have hrr : ∀ i j, i ≠ j → r i ≠ r j := by
+    intro i j hij hr
+    apply hij
+    have h := hinj (a₁ := Sum.inl i) (a₂ := Sum.inl j) (by simp [hr])
+    exact Sum.inl_injective h
+  have hrz : ∀ i k, (r i : ℂ) ≠ ζ k := by
+    intro i k h
+    have h' := hinj (a₁ := Sum.inl i) (a₂ := Sum.inr (Sum.inl k)) (by simp [h])
+    exact Sum.inl_ne_inr h'
+  have hzz : ∀ k l, k ≠ l → ζ k ≠ ζ l := by
+    intro k l hkl h
+    apply hkl
+    have h' := hinj (a₁ := Sum.inr (Sum.inl k)) (a₂ := Sum.inr (Sum.inl l)) (by simp [h])
+    simpa using h'
+  have hzc : ∀ k l, ζ k ≠ star (ζ l) := by
+    intro k l h
+    have h' := hinj (a₁ := Sum.inr (Sum.inl k)) (a₂ := Sum.inr (Sum.inr l)) (by simp [h])
+    simp at h'
+  -- orthogonality facts for the unsplit family
+  have O1 : ∀ i j, i ≠ j → v i ⬝ᵥ (B *ᵥ v j) = 0 := fun i j hij =>
+    eigvec_orth hB hBT (hv i) (hv j) (hrr i j hij)
+  have O2 : ∀ i k, v i ⬝ᵥ (B *ᵥ U k) = 0 ∧ v i ⬝ᵥ (B *ᵥ Wm k) = 0 := fun i k =>
+    cross_orth hB hBT (hv i) (hz k) (hrz i k)
+  have O3 : ∀ k l, k ≠ l → U k ⬝ᵥ (B *ᵥ U l) = 0 ∧ U k ⬝ᵥ (B *ᵥ Wm l) = 0 ∧
+      Wm k ⬝ᵥ (B *ᵥ U l) = 0 ∧ Wm k ⬝ᵥ (B *ᵥ Wm l) = 0 := fun k l hkl =>
+    pair_orth hB hBT (hz k) (hz l) (hzz k l hkl) (hzc k l)
+  have O4 : ∀ k, U k ⬝ᵥ (B *ᵥ U k) + Wm k ⬝ᵥ (B *ᵥ Wm k) = 0 := fun k =>
+    herm_split hB hBT (hz k) (hzc k k)
+  have S : ∀ x y : n → ℝ, x ⬝ᵥ (B *ᵥ y) = y ⬝ᵥ (B *ᵥ x) := bil_symm hB
+  -- the unsplit real family is independent; transport it to the index type `n`
+  set W : ι ⊕ (κ ⊕ κ) → n → ℝ := Sum.elim v (Sum.elim U Wm) with hWdef
+  have hWi : LinearIndependent ℝ W := real_family_indep T r v hv hv0 ζ z hz hz0 hinj
+  have hcardS : Fintype.card (ι ⊕ (κ ⊕ κ)) = Fintype.card n := by
+    simp only [Fintype.card_sum]; omega
+  let e : ι ⊕ (κ ⊕ κ) ≃ n := Fintype.equivOfCardEq hcardS
+  have hW' : LinearIndependent ℝ (W ∘ e.symm) := hWi.comp e.symm e.symm.injective
+  have nonull : ∀ a, a ≠ Sum.inl i₀ → (∀ b, W a ⬝ᵥ (B *ᵥ W b) = 0) → False := by
+    intro a ha0 ha
+    have hBy : B *ᵥ W a = 0 :=
+      orth_all_ker B hB (W ∘ e.symm) hW' (W a) (fun b => by
+        simpa [Function.comp] using ha (e.symm b))
+    obtain ⟨t, ht⟩ := hker (W a) hBy
+    have hsum : ∑ c, ((if c = a then (1 : ℝ) else 0) - (if c = Sum.inl i₀ then t else 0)) • W c
+        = 0 := by
+      simp only [sub_smul, Finset.sum_sub_distrib, ite_smul, one_smul, zero_smul,
+        Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+      rw [ht]
+      exact sub_self _
+    have h := (Fintype.linearIndependent_iff.mp hWi) _ hsum a
+    simp [ha0] at h
+  -- nonzero real norms
+  have Nv : ∀ i, i ≠ i₀ → v i ⬝ᵥ (B *ᵥ v i) ≠ 0 := by
+    intro i hi h0
+    apply nonull (Sum.inl i) (fun h => hi (Sum.inl_injective h))
+    intro b
+    rcases b with j | k | k
+    · by_cases hij : i = j
+      · subst hij; exact h0
+      · exact O1 i j hij
+    · exact (O2 i k).1
+    · exact (O2 i k).2
+  -- each plane is not B-null
+  have Nd : ∀ k, U k ⬝ᵥ (B *ᵥ U k) ≠ 0 ∨ U k ⬝ᵥ (B *ᵥ Wm k) ≠ 0 := by
+    intro k
+    by_contra h
+    push_neg at h
+    apply nonull (Sum.inr (Sum.inl k)) Sum.inr_ne_inl
+    intro b
+    rcases b with j | l | l
+    · change U k ⬝ᵥ (B *ᵥ v j) = 0
+      rw [S]; exact (O2 j k).1
+    · by_cases hkl : k = l
+      · subst hkl; exact h.1
+      · exact (O3 k l hkl).1
+    · by_cases hkl : k = l
+      · subst hkl; exact h.2
+      · exact (O3 k l hkl).2.1
+  -- split each plane
+  have hps : ∀ k, ∃ α β γ δ : ℝ, (α • U k + β • Wm k) ⬝ᵥ (B *ᵥ (γ • U k + δ • Wm k)) = 0 ∧
+      ((α • U k + β • Wm k) ⬝ᵥ (B *ᵥ (α • U k + β • Wm k)))
+        * ((γ • U k + δ • Wm k) ⬝ᵥ (B *ᵥ (γ • U k + δ • Wm k))) < 0 ∧
+      α * δ - β * γ ≠ 0 := fun k => plane_split hB (U k) (Wm k) (O4 k) (Nd k)
+  choose α β γ δ hp1 hp2 _hp3 using hps
+  set f1 : κ → n → ℝ := fun k => α k • U k + β k • Wm k with hf1
+  set f2 : κ → n → ℝ := fun k => γ k • U k + δ k • Wm k with hf2
+  set F : ι ⊕ (κ ⊕ κ) → n → ℝ := Sum.elim v (Sum.elim f1 f2) with hFdef
+  have L : ∀ (a b : ℝ) (x y w : n → ℝ),
+      (a • x + b • y) ⬝ᵥ (B *ᵥ w) = a * (x ⬝ᵥ (B *ᵥ w)) + b * (y ⬝ᵥ (B *ᵥ w)) := by
+    intro a b x y w
+    simp only [add_dotProduct, smul_dotProduct, smul_eq_mul]
+  have R : ∀ (a b : ℝ) (x y w : n → ℝ),
+      w ⬝ᵥ (B *ᵥ (a • x + b • y)) = a * (w ⬝ᵥ (B *ᵥ x)) + b * (w ⬝ᵥ (B *ᵥ y)) := by
+    intro a b x y w
+    simp only [Matrix.mulVec_add, Matrix.mulVec_smul, dotProduct_add, dotProduct_smul,
+      smul_eq_mul]
+  -- the split family is B-orthogonal
+  have horthF : ∀ a b, a ≠ b → F a ⬝ᵥ (B *ᵥ F b) = 0 := by
+    intro a b hab
+    rcases a with i | k | k <;> rcases b with j | l | l
+    · exact O1 i j (fun h => hab (by rw [h]))
+    · change v i ⬝ᵥ (B *ᵥ (α l • U l + β l • Wm l)) = 0
+      rw [R, (O2 i l).1, (O2 i l).2]; ring
+    · change v i ⬝ᵥ (B *ᵥ (γ l • U l + δ l • Wm l)) = 0
+      rw [R, (O2 i l).1, (O2 i l).2]; ring
+    · change (α k • U k + β k • Wm k) ⬝ᵥ (B *ᵥ v j) = 0
+      rw [L, S (U k), S (Wm k), (O2 j k).1, (O2 j k).2]; ring
+    · have hkl : k ≠ l := fun h => hab (by rw [h])
+      obtain ⟨h1, h2, h3, h4⟩ := O3 k l hkl
+      change (α k • U k + β k • Wm k) ⬝ᵥ (B *ᵥ (α l • U l + β l • Wm l)) = 0
+      rw [L, R, R, h1, h2, h3, h4]; ring
+    · by_cases hkl : k = l
+      · subst hkl; exact hp1 _
+      · obtain ⟨h1, h2, h3, h4⟩ := O3 k l hkl
+        change (α k • U k + β k • Wm k) ⬝ᵥ (B *ᵥ (γ l • U l + δ l • Wm l)) = 0
+        rw [L, R, R, h1, h2, h3, h4]; ring
+    · change (γ k • U k + δ k • Wm k) ⬝ᵥ (B *ᵥ v j) = 0
+      rw [L, S (U k), S (Wm k), (O2 j k).1, (O2 j k).2]; ring
+    · by_cases hkl : k = l
+      · subst hkl; rw [S]; exact hp1 _
+      · obtain ⟨h1, h2, h3, h4⟩ := O3 k l hkl
+        change (γ k • U k + δ k • Wm k) ⬝ᵥ (B *ᵥ (α l • U l + β l • Wm l)) = 0
+        rw [L, R, R, h1, h2, h3, h4]; ring
+    · have hkl : k ≠ l := fun h => hab (by rw [h])
+      obtain ⟨h1, h2, h3, h4⟩ := O3 k l hkl
+      change (γ k • U k + δ k • Wm k) ⬝ᵥ (B *ᵥ (γ l • U l + δ l • Wm l)) = 0
+      rw [L, R, R, h1, h2, h3, h4]; ring
+  -- nonzero norms of the split family
+  have hnzF : ∀ a, a ≠ Sum.inl i₀ → F a ⬝ᵥ (B *ᵥ F a) ≠ 0 := by
+    intro a ha0
+    rcases a with i | k | k
+    · exact Nv i (fun h => ha0 (by rw [h]))
+    · intro h0
+      have h := hp2 k
+      have h0' : (α k • U k + β k • Wm k) ⬝ᵥ (B *ᵥ (α k • U k + β k • Wm k)) = 0 := h0
+      rw [h0', zero_mul] at h
+      exact lt_irrefl 0 h
+    · intro h0
+      have h := hp2 k
+      have h0' : (γ k • U k + δ k • Wm k) ⬝ᵥ (B *ᵥ (γ k • U k + δ k • Wm k)) = 0 := h0
+      rw [h0', mul_zero] at h
+      exact lt_irrefl 0 h
+  -- count with step 3
+  have hort' : ∀ i j : n, i ≠ j → (F ∘ e.symm) i ⬝ᵥ (B *ᵥ (F ∘ e.symm) j) = 0 :=
+    fun i j hij => horthF _ _ (fun h => hij (e.symm.injective h))
+  have hnz' : ∀ i : n, i ≠ e (Sum.inl i₀) → (F ∘ e.symm) i ⬝ᵥ (B *ᵥ (F ∘ e.symm) i) ≠ 0 :=
+    fun i hi => hnzF _ (fun h => hi (by rw [← h, e.apply_symm_apply]))
+  have hF0 : (F ∘ e.symm) (e (Sum.inl i₀)) ≠ 0 := by
+    simp only [Function.comp_apply, Equiv.symm_apply_apply]
+    exact hv0 i₀
+  rw [sigNeg_of_orth_family_ker B (F ∘ e.symm) hort' (e (Sum.inl i₀)) hnz' hF0 q hq]
+  have hc1 : (univ.filter fun i : n => (F ∘ e.symm) i ⬝ᵥ (B *ᵥ (F ∘ e.symm) i) < 0).card
+      = (univ.filter fun a => F a ⬝ᵥ (B *ᵥ F a) < 0).card := by
+    rw [Finset.card_filter, Finset.card_filter]
+    exact Equiv.sum_comp e.symm (fun a => if F a ⬝ᵥ (B *ᵥ F a) < 0 then 1 else 0)
+  have hk : ∀ k, ((if f1 k ⬝ᵥ (B *ᵥ f1 k) < 0 then 1 else 0)
+      + (if f2 k ⬝ᵥ (B *ᵥ f2 k) < 0 then 1 else 0) : ℕ) = 1 := by
+    intro k
+    have h := hp2 k
+    have e1 : f1 k = α k • U k + β k • Wm k := rfl
+    have e2 : f2 k = γ k • U k + δ k • Wm k := rfl
+    rw [e1, e2]
+    rcases mul_neg_iff.mp h with ⟨h0, h1⟩ | ⟨h0, h1⟩
+    · rw [if_neg (not_lt.mpr h0.le), if_pos h1]
+    · rw [if_pos h0, if_neg (not_lt.mpr h1.le)]
+  rw [hc1, Finset.card_filter, Finset.card_filter]
+  simp only [Fintype.sum_sum_type]
+  rw [← Finset.sum_add_distrib]
+  congr 1
+  exact (Finset.sum_congr rfl fun k _ => hk k).trans (by simp)
 
 /-- Every real square matrix `A` defines a quadratic form `q(w) = wᵀ A w`. -/
 theorem exists_qform {n : Type*} [Fintype n] [DecidableEq n] (A : Matrix n n ℝ) :

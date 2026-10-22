@@ -1,7 +1,7 @@
 /-
-  kontrol/NegatifKontrol.lean  v1.23 -- negative control (not part of the library build).
+  kontrol/NegatifKontrol.lean  v1.24 -- negative control (not part of the library build).
   Run:  lake env lean kontrol/NegatifKontrol.lean
-  Expected: exactly FIFTY-FOUR errors, one per CORRUPTED block; every CORRECT line is accepted.
+  Expected: exactly FIFTY-SEVEN errors, one per CORRUPTED block; every CORRECT line is accepted.
 -/
 import CvsIndexLaw
 
@@ -514,3 +514,34 @@ example {N : ℕ} (Q : Matrix (CvS.Idx N) (CvS.Idx N) ℝ) (a b : CvS.Idx N → 
 example {n : Type*} [Fintype n] [DecidableEq n] (A : Matrix n n ℝ) :
     ∃ q : QuadraticForm ℝ (n → ℝ), ∀ w, q w = w ⬝ᵥ w :=
   CvS.exists_qform A
+
+-- CORRUPTED input (kernel 1): the singular balance without the complex pairs. This must FAIL.
+open Matrix in
+example {n ι κ : Type*} [Fintype n] [DecidableEq n] [Fintype ι] [Fintype κ]
+    {B T : Matrix n n ℝ} (hB : Bᵀ = B) (hBT : (B * T)ᵀ = B * T)
+    (r : ι → ℝ) (v : ι → n → ℝ) (hv : ∀ i, T *ᵥ v i = r i • v i) (hv0 : ∀ i, v i ≠ 0)
+    (i₀ : ι) (hker : ∀ y, B *ᵥ y = 0 → ∃ t : ℝ, y = t • v i₀)
+    (ζ : κ → ℂ) (z : κ → n → ℂ)
+    (hz : ∀ k, T.map (algebraMap ℝ ℂ) *ᵥ z k = ζ k • z k) (hz0 : ∀ k, z k ≠ 0)
+    (hinj : Function.Injective
+      (Sum.elim (fun i => (r i : ℂ)) (Sum.elim ζ (fun k => star (ζ k)))))
+    (hcard : Fintype.card ι + 2 * Fintype.card κ = Fintype.card n)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) < 0)).card :=
+  CvS.pontryagin_balance_ker hB hBT r v hv hv0 i₀ hker ζ z hz hz0 hinj hcard q hq
+
+-- CORRUPTED input (kernel 2): orthogonality to a basis claimed to force y = 0 (singular B). This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ) (hB : Bᵀ = B)
+    (W : n → n → ℝ) (hW : LinearIndependent ℝ W) (y : n → ℝ)
+    (hy : ∀ b, y ⬝ᵥ (B *ᵥ W b) = 0) : y = 0 :=
+  CvS.orth_all_ker B hB W hW y hy
+
+-- CORRUPTED input (kernel 3): non-positive norms counted instead of negative ones. This must FAIL.
+open Matrix in
+example {n : Type*} [Fintype n] [DecidableEq n] (B : Matrix n n ℝ)
+    (v : n → n → ℝ) (horth : ∀ i j, i ≠ j → v i ⬝ᵥ (B *ᵥ v j) = 0) (i₀ : n)
+    (hnz : ∀ i, i ≠ i₀ → v i ⬝ᵥ (B *ᵥ v i) ≠ 0) (hv0 : v i₀ ≠ 0)
+    (q : QuadraticForm ℝ (n → ℝ)) (hq : ∀ x, q x = x ⬝ᵥ (B *ᵥ x)) :
+    sigNeg q = (Finset.univ.filter (fun i => v i ⬝ᵥ (B *ᵥ v i) ≤ 0)).card :=
+  CvS.sigNeg_of_orth_family_ker B v horth i₀ hnz hv0 q hq
