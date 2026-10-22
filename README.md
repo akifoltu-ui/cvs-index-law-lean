@@ -16,7 +16,9 @@ $P_\xi(s)=\sum_k \xi_k\prod_{j\ne k}(j-s)$, let $\mu$ avoid the spectrum and $x=
 
 $$N_c(P_x)+d(x)+[x_0<0]=\kappa(\mu),$$
 
-where $N_c$ counts pairs of non-real zeros, $`d(x)=\mathrm{card}\,\lbrace s\in\mathbb{R}\setminus\lbrace 0\rbrace : P_x(s)=0,\ P_x'(s)\,P_{\beta\odot x}(s)>0\rbrace`$ and $\kappa(\mu)$ is the number of eigenvalues below $\mu$. At $\mu=0$ this reads the positivity of $Q$ from the zeros of one polynomial. The Connes–van Suijlekom class of the note ($a$ even, $b$ odd) is the special case `CvS.lock_cvs`. The pen-and-paper proof is in the note; it goes through $[D,Q]=\beta\wedge\eta$ and a Bezout-matrix congruence (a Hermite-type signature count).
+where $N_c$ counts pairs of non-real zeros, $`d(x)=\mathrm{card}\,\lbrace s\in\mathbb{R}\setminus\lbrace 0\rbrace : P_x(s)=0,\ P_x'(s)\,P_{\beta\odot x}(s)>0\rbrace`$ and $\kappa(\mu)$ is the number of eigenvalues below $\mu$. At $\mu=0$ this reads the positivity of $Q$ from the zeros of one polynomial. The Connes–van Suijlekom class of the note ($a$ even, $b$ odd) is the special case `CvS.lock_cvs`.
+
+**Arbitrary real nodes.** The same identity holds for every finite set of pairwise distinct real nodes $\nu_i$, with $q_{ij}=(b_i-b_j)/(\nu_i-\nu_j)$ and the resolvent index at the node $\nu_{k_0}=0$; any node set and any index reduce to this form by the shift $\nu\mapsto\nu-\nu_k$. This is `LoewnerLock.lock` in `CvsIndexLaw/Loewner.lean`; there $\deg P_x=n-1$ for $n$ nodes, and the integer nodes $-N,\dots,N$ are the instance `LoewnerLock.instNodesIdx`. The pen-and-paper proof is in the note; it goes through $[D,Q]=\beta\wedge\eta$ and a Bezout-matrix congruence (a Hermite-type signature count).
 
 The theorem has been verified numerically with interval arithmetic on truncated Weil quadratic forms and on an Epstein zeta function with genuine off-line zeros ([doi:10.5281/zenodo.23458944](https://doi.org/10.5281/zenodo.23458944)).
 
@@ -54,6 +56,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.exists_qform` | every real square matrix gives the quadratic form $`w^{\top}Aw`$ | **proved** |
 | `CvS.lock` | **Theorem 6, resolvent lock**, every Loewner matrix: $`N_c(P_x)+d(x)+[x_0<0]=\kappa(\mu)`$ | **proved** |
 | `CvS.lock_cvs`, `CvS.index_even_cvs` | Theorems 6 and 5(a) for the CvS class, as stated in the note | **proved** |
+| `LoewnerLock.Nodes`, `LoewnerLock.lock` | **Theorem 6 for arbitrary distinct real nodes** (any finite node set, resolvent index at the node $`0`$); integer nodes: `LoewnerLock.instNodesIdx` | **proved** |
 
 Contributions are welcome: open an issue or a pull request. A natural reusable by-product is Hermite's theorem (signature of the Bezoutian counts real roots), which would also be a Mathlib contribution.
 
@@ -65,6 +68,7 @@ The library compiles against Mathlib (Lean v4.36.0-rc1). Theorem 5(a) (`CvS.inde
 lake exe cache get
 lake build
 lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly sixty errors expected
+lake env lean kontrol/LoewnerKontrol.lean   # negative control (arbitrary nodes): exactly three errors expected
 ```
 
 ## License
@@ -73,6 +77,6 @@ Apache 2.0, the Mathlib license.
 
 ---
 
-**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İndeks yasası (Teorem 5(a), `CvS.index_even`) ve rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; Teorem 6 her Loewner tipi matris için (parite koşulu olmadan), Teorem 5(a) `b` tek iken geçerlidir; kütüphanede `sorry` yoktur (aksiyom denetimi: `kontrol/Aksiyom.lean`). Katkıya açıktır.
+**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İndeks yasası (Teorem 5(a), `CvS.index_even`) ve rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; Teorem 6 her Loewner tipi matris için (parite koşulu olmadan), Teorem 5(a) `b` tek iken geçerlidir; Teorem 6 ayrıca keyfi farklı gerçel düğümler için kanıtlanmıştır (`LoewnerLock.lock`); kütüphanede `sorry` yoktur (aksiyom denetimi: `kontrol/Aksiyom.lean`). Katkıya açıktır.
 
 _Lean statements and proofs drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._
