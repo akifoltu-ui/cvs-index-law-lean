@@ -7,5 +7,7 @@ authors:
     given-names: "Mehmet Akif"
     orcid: "https://orcid.org/0009-0003-0928-0854"
 repository-code: "https://github.com/akifoltu-ui/cvs-index-law-lean"
+license: Apache-2.0
+doi: "10.5281/zenodo.23605690"
 version: "1.3.1"
 date-released: "2026-10-24"
