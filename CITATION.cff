@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "cvs-index-law-lean"
+authors:
+  - family-names: "Oltulu"
+    given-names: "Mehmet Akif"
+    orcid: "https://orcid.org/0009-0003-0928-0854"
+repository-code: "https://github.com/akifoltu-ui/cvs-index-law-lean"
+version: "1.3.1"
+date-released: "2026-10-24"
