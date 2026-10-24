@@ -9,5 +9,7 @@ authors:
 repository-code: "https://github.com/akifoltu-ui/cvs-index-law-lean"
 license: Apache-2.0
 doi: "10.5281/zenodo.23605690"
-version: "v1.4"
+version: "1.4.1"
 date-released: "2026-10-24"
+abstract: >-
+  Lean 4 / Mathlib formalization, fully proved and axiom-audited, of the index law (Theorem 5(a)) and the resolvent lock (Theorem 6) for Connes-van Suijlekom type matrices (Oltulu 2026, doi:10.5281/zenodo.23459269). Theorem 6 holds for every Loewner-type matrix and for arbitrary distinct real nodes. The library also proves the interlacing core of the lock pencil, the parity determinant identity for reflection-symmetric Loewner matrices, and the parity transport theorem: an explicit odd-to-even transport of Cauchy forms, the strict even ordering of the lowest eigenvalue for weighted poles beyond all nodes, and the sharp threshold for the nodes 0, ±1, ±2. Every declaration is proved (sorry-free; axioms: propext, Classical.choice, Quot.sound), with negative controls.
