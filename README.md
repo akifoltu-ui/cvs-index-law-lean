@@ -6,7 +6,7 @@ Lean 4 / Mathlib formalization of the finite-dimensional theorems in
 >
 > Formal verification supplement (EN/TR): M. A. Oltulu, *Formal verification of the index law and the resolvent lock in Lean 4*, Zenodo, [doi:10.5281/zenodo.23561287](https://doi.org/10.5281/zenodo.23561287) (2026); verified state: tag `v1.0`, commit `08a1c67`.
 >
-> Latest release: `v1.3.1`, [doi:10.5281/zenodo.23605691](https://doi.org/10.5281/zenodo.23605691); the supplement above documents `v1.0`.
+> Latest release: `v1.4`; all releases: [doi:10.5281/zenodo.23605690](https://doi.org/10.5281/zenodo.23605690) (resolves to the newest version); the supplement above documents `v1.0`.
 >
 > Lemma numbers follow the note (version 2.2): Lemma 1 commutator, 2 rank-one determinant, 3 $`Q_\lambda`$-symmetry, 4 non-degeneracy, 6 norm identity, 7 Pontryagin balance.
 
@@ -59,6 +59,7 @@ The theorem has been verified numerically with interval arithmetic on truncated 
 | `CvS.lock` | **Theorem 6, resolvent lock**, every Loewner matrix: $`N_c(P_x)+d(x)+[x_0<0]=\kappa(\mu)`$ | **proved** |
 | `CvS.lock_cvs`, `CvS.index_even_cvs` | Theorems 6 and 5(a) for the CvS class, as stated in the note | **proved** |
 | `LoewnerLock.Nodes`, `LoewnerLock.lock` | **Theorem 6 for arbitrary distinct real nodes** (any finite node set, resolvent index at the node $`0`$); integer nodes: `LoewnerLock.instNodesIdx` | **proved** |
+| `LoewnerLock.Transport.transport_cauchy`, `LoewnerLock.Transport.transport_le`, `LoewnerLock.Transport.band_out_order`, `LoewnerLock.Transport.sharp_two_order` | **Parity transport** for Cauchy forms on the nodes $`0,\pm x_j`$: $`Tz=(-2\sum_j z_j/x_j;\ z_j/x_j)`$ maps odd to even vectors with $`C_{E(Tz)}(p)=C_{Oz}(p)/p`$ at every pole; for weighted poles beyond all nodes the transported even vector has a strictly smaller Rayleigh quotient (the lowest eigenvalue is even); nodes $`0,\pm1,\pm2`$: $`p^2>5000/1849`$ suffices | **proved** |
 
 Contributions are welcome: open an issue or a pull request. A natural reusable by-product is Hermite's theorem (signature of the Bezoutian counts real roots), which would also be a Mathlib contribution.
 
@@ -71,6 +72,7 @@ lake exe cache get
 lake build
 lake env lean kontrol/NegatifKontrol.lean   # negative control: exactly sixty errors expected
 lake env lean kontrol/LoewnerKontrol.lean   # negative control (arbitrary nodes): exactly three errors expected
+lake env lean kontrol/TransportKontrol.lean  # negative control (parity transport): exactly five errors expected
 ```
 
 ## License
@@ -79,6 +81,6 @@ Apache 2.0, the Mathlib license.
 
 ---
 
-**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İndeks yasası (Teorem 5(a), `CvS.index_even`) ve rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; Teorem 6 her Loewner tipi matris için (parite koşulu olmadan), Teorem 5(a) `b` tek iken geçerlidir; Teorem 6 ayrıca keyfi farklı gerçel düğümler için kanıtlanmıştır (`LoewnerLock.lock`); kütüphanede `sorry` yoktur (aksiyom denetimi: `kontrol/Aksiyom.lean`). Katkıya açıktır.
+**Türkçe.** Bu depo, Connes–van Suijlekom sınıfı için kanıtlanan indeks yasası (Teorem 5) ve rezolvent kilidinin (Teorem 6) Lean 4 / Mathlib ifadelerini içerir. İndeks yasası (Teorem 5(a), `CvS.index_even`) ve rezolvent kilidi (Teorem 6, `CvS.lock`) Lean'de tam olarak kanıtlanmıştır; Teorem 6 her Loewner tipi matris için (parite koşulu olmadan), Teorem 5(a) `b` tek iken geçerlidir; Teorem 6 ayrıca keyfi farklı gerçel düğümler için kanıtlanmıştır (`LoewnerLock.lock`); kütüphanede `sorry` yoktur (aksiyom denetimi: `kontrol/Aksiyom.lean`). Kütüphane ayrıca parite taşıma teoremini kanıtlar (`LoewnerLock.Transport`): T z = (−2 Σ z_j/x_j ; z_j/x_j) her tek vektörü, her kutupta Cauchy değeri tek olanınkinin 1/p katı olan bir çift vektöre taşır; bütün kutuplar bütün düğümlerin ötesindeyse en küçük çift Rayleigh oranı tek olanınkinin kesinlikle altındadır, 0, ±1, ±2 düğümlerinde p² > 5000/1849 yeter. Katkıya açıktır.
 
 _Lean statements and proofs drafted with AI assistance from the author's paper; compiled and checked by the author (CI + negative control)._
