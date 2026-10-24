@@ -6,6 +6,8 @@ Lean 4 / Mathlib formalization of the finite-dimensional theorems in
 >
 > Formal verification supplement (EN/TR): M. A. Oltulu, *Formal verification of the index law and the resolvent lock in Lean 4*, Zenodo, [doi:10.5281/zenodo.23561287](https://doi.org/10.5281/zenodo.23561287) (2026); verified state: tag `v1.0`, commit `08a1c67`.
 >
+> Latest release: `v1.3.1`, [doi:10.5281/zenodo.23605691](https://doi.org/10.5281/zenodo.23605691); the supplement above documents `v1.0`.
+>
 > Lemma numbers follow the note (version 2.2): Lemma 1 commutator, 2 rank-one determinant, 3 $`Q_\lambda`$-symmetry, 4 non-degeneracy, 6 norm identity, 7 Pontryagin balance.
 
 ## The statement (Theorem 6, resolvent lock)
