@@ -3,3 +3,4 @@ import CvsIndexLaw.Loewner
 import CvsIndexLaw.Interlace
 import CvsIndexLaw.ParityDet
 import CvsIndexLaw.ParityDetLink
+import CvsIndexLaw.ParityTransport
